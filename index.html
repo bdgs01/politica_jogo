@@ -2,239 +2,80 @@
 <html lang="pt-BR">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>República Digital - Simulador Político</title>
-    
-    <!-- Biblioteca jsPDF para geração de PDFs -->
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
-    
-    <!-- CSS principal do jogo -->
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>República Digital</title>
+    <!-- Referência ao CSS local -->
     <link rel="stylesheet" href="style.css">
 </head>
 <body>
     <div class="app">
-        <!-- Header do jogo -->
-        <div class="header">
-            <div>
-                <span class="title">📊 República Digital</span>
-                <span class="subtitle" id="header-subtitle">Simulador Político Avançado</span>
-            </div>
+        <header class="header">
+            <h1 class="title">📊 República Digital</h1>
             <div class="header-controls">
-                <button class="icon-btn" id="save-btn" title="Salvar Jogo" onclick="game && game.manualSave()">💾</button>
-                <button class="icon-btn" id="load-btn" title="Carregar Jogo" onclick="game && game.loadGame()">📁</button>
-                <button class="icon-btn" id="export-btn" title="Exportar PDF" onclick="game && game.exportToPDF()">📄</button>
-                <div id="term-display" style="font-size: 14px; font-weight: 600;"></div>
+                <button id="save-btn" class="icon-btn" title="Salvar Jogo">💾</button>
+                <button id="load-btn" class="icon-btn" title="Carregar Jogo">📁</button>
+                <button id="export-btn" class="icon-btn" title="Exportar PDF">📄</button>
+                <span id="term-display"></span>
             </div>
-        </div>
+        </header>
 
-        <!-- Conteúdo principal -->
-        <div class="main-content">
-            <!-- TELA DE CRIAÇÃO DE CANDIDATO -->
-            <div id="setup" class="screen active">
+        <main class="main-content">
+            <!-- Setup -->
+            <section id="setup" class="screen active">
                 <div class="card">
-                    <h3>Configuração do Candidato</h3>
-                    <input type="text" id="candidate-name" class="input-field" placeholder="Nome do candidato" maxlength="50">
-                    
-                    <div style="margin: 20px 0;">
-                        <label style="display: block; margin-bottom: 10px;">Orientação Política:</label>
-                        <div class="ideology-grid">
-                            <div class="ideology-btn" data-ideology="esquerda">
-                                <div>🌹 Esquerda</div>
-                                <div style="font-size: 10px; opacity: 0.8;">Justiça Social</div>
-                            </div>
-                            <div class="ideology-btn" data-ideology="centro">
-                                <div>⚖️ Centro</div>
-                                <div style="font-size: 10px; opacity: 0.8;">Equilíbrio</div>
-                            </div>
-                            <div class="ideology-btn" data-ideology="direita">
-                                <div>💼 Direita</div>
-                                <div style="font-size: 10px; opacity: 0.8;">Livre Mercado</div>
-                            </div>
-                        </div>
+                    <h2>Configuração do Candidato</h2>
+                    <input id="candidate-name" class="input-field" placeholder="Nome do candidato">
+                    <div class="ideology-grid">
+                        <button class="ideology-btn" data-ideology="esquerda">🌹 Esquerda</button>
+                        <button class="ideology-btn" data-ideology="centro">⚖️ Centro</button>
+                        <button class="ideology-btn" data-ideology="direita">💼 Direita</button>
                     </div>
-
-                    <div id="philosophy-preview" class="philosophy-quote" style="display: none;"></div>
-                    
+                    <p id="philosophy-preview" class="philosophy-quote" hidden></p>
                     <button id="start-game" class="btn" disabled>Iniciar Campanha</button>
-                    
-                    <div style="text-align: center; margin-top: 15px;">
-                        <button class="btn secondary" onclick="game && game.loadGame()">Continuar Jogo Salvo</button>
-                    </div>
+                    <button id="load-game" class="btn secondary">Continuar Jogo Salvo</button>
                 </div>
-            </div>
+            </section>
 
-            <!-- TELA DE CAMPANHA ELEITORAL -->
-            <div id="campaign" class="screen">
+            <!-- Campanha -->
+            <section id="campaign" class="screen">
                 <div class="resources-bar">
-                    <div class="resource">⏰ <span id="days-left">90</span> dias</div>
-                    <div class="resource">💰 R$<span id="funds">40</span>M</div>
-                    <div class="resource">🤝 <span id="support">0</span>% Apoio</div>
-                    <div class="resource">📊 <span id="polls">35</span>% Pesquisas</div>
+                    <span>⏰ <span id="days-left">90</span> dias</span>
+                    <span>💰 R$<span id="funds">50</span>M</span>
+                    <span>🤝 <span id="support">0</span>% Apoio</span>
                 </div>
-                <div class="stats-compact" id="campaign-stats"></div>
-                <div class="actions-list" id="campaign-actions"></div>
-                <button id="skip-campaign" class="skip-time-btn" style="display: none;">Pular para Eleição ⏭️</button>
-            </div>
+                <div id="campaign-stats" class="stats-compact"></div>
+                <div id="campaign-actions" class="actions-list"></div>
+            </section>
 
-            <!-- TELA DE GOVERNO -->
-            <div id="government" class="screen">
+            <!-- Governo -->
+            <section id="government" class="screen">
                 <div class="resources-bar">
-                    <div class="resource">🗓️ <span id="months-left">48</span> meses</div>
-                    <div class="resource">💰 PIB: <span id="gdp">100</span></div>
-                    <div class="resource">👥 Pop: <span id="population">215M</span></div>
-                    <div class="resource">⚖️ Cong: <span id="congress-approval">50</span>%</div>
+                    <span>🗓️ <span id="months-left">48</span> meses</span>
                 </div>
-                <div class="stats-compact" id="government-stats"></div>
-                
-                <!-- Barras de progresso principais -->
+                <div id="government-stats" class="stats-compact"></div>
                 <div class="progress-container">
-                    <div class="progress-label">
-                        <span>Aprovação Popular</span>
-                        <span id="popularity-percent">50%</span>
-                    </div>
-                    <div class="progress-bar">
-                        <div class="progress-fill" id="popularity-bar" style="width: 50%"></div>
-                    </div>
+                    <div class="progress-label">Aprovação: <span id="popularity-percent">60%</span></div>
+                    <div class="progress-bar"><div id="popularity-bar" class="progress-fill"></div></div>
                 </div>
-                
                 <div class="progress-container">
-                    <div class="progress-label">
-                        <span>Risco de Impeachment</span>
-                        <span id="impeachment-percent">20%</span>
-                    </div>
-                    <div class="progress-bar">
-                        <div class="progress-fill" id="impeachment-bar" style="width: 20%"></div>
-                    </div>
+                    <div class="progress-label">Risco de Impeachment: <span id="impeachment-percent">15%</span></div>
+                    <div class="progress-bar"><div id="impeachment-bar" class="progress-fill"></div></div>
                 </div>
-                
-                <!-- Barras de progresso secundárias -->
-                <div class="secondary-metrics">
-                    <div class="metric-row">
-                        <span>Relação com Mídia:</span>
-                        <div class="mini-progress-bar">
-                            <div class="mini-progress-fill" id="media-relation-bar" style="width: 50%"></div>
-                        </div>
-                        <span id="media-relation-percent">50%</span>
-                    </div>
-                    
-                    <div class="metric-row">
-                        <span>Estabilidade Econômica:</span>
-                        <div class="mini-progress-bar">
-                            <div class="mini-progress-fill" id="economic-stability-bar" style="width: 60%"></div>
-                        </div>
-                        <span id="economic-stability-percent">60%</span>
-                    </div>
-                    
-                    <div class="metric-row">
-                        <span>Coesão Social:</span>
-                        <div class="mini-progress-bar">
-                            <div class="mini-progress-fill" id="social-cohesion-bar" style="width: 45%"></div>
-                        </div>
-                        <span id="social-cohesion-percent">45%</span>
-                    </div>
-                </div>
-                
-                <div class="actions-list" id="government-actions"></div>
-                <button id="skip-government" class="skip-time-btn" style="display: none;">Pular para Fim do Mandato ⏭️</button>
-            </div>
+                <div id="government-actions" class="actions-list"></div>
+            </section>
+        </main>
 
-            <!-- TELA DE ANÁLISE DE DADOS -->
-            <div id="analytics" class="screen">
-                <div class="card">
-                    <h3>📊 Centro de Análise Política</h3>
-                    <div id="analytics-content">
-                        <!-- Conteúdo será preenchido dinamicamente -->
-                    </div>
-                </div>
-            </div>
-
-            <!-- TELA DE CONFIGURAÇÕES -->
-            <div id="settings" class="screen">
-                <div class="card">
-                    <h3>⚙️ Configurações do Jogo</h3>
-                    <div class="settings-content">
-                        <div class="setting-item">
-                            <label for="difficulty-select">Nível de Dificuldade:</label>
-                            <select id="difficulty-select" class="input-field">
-                                <option value="easy">Fácil - Tutorial Político</option>
-                                <option value="normal" selected>Normal - Realismo Balanceado</option>
-                                <option value="hard">Difícil - Desafio Político</option>
-                                <option value="expert">Expert - Simulação Realista</option>
-                            </select>
-                        </div>
-                        
-                        <div class="setting-item">
-                            <label for="autosave-toggle">Salvamento Automático:</label>
-                            <input type="checkbox" id="autosave-toggle" checked>
-                        </div>
-                        
-                        <div class="setting-item">
-                            <label for="notifications-toggle">Notificações de Sistema:</label>
-                            <input type="checkbox" id="notifications-toggle" checked>
-                        </div>
-                        
-                        <div class="setting-item">
-                            <label for="speed-multiplier">Velocidade do Tempo:</label>
-                            <select id="speed-multiplier" class="input-field">
-                                <option value="0.5">Muito Lento (2x mais tempo)</option>
-                                <option value="1" selected>Normal</option>
-                                <option value="1.5">Rápido (1.5x mais rápido)</option>
-                                <option value="2">Muito Rápido (2x mais rápido)</option>
-                            </select>
-                        </div>
-                        
-                        <button class="btn" onclick="game && game.applySettings()">Aplicar Configurações</button>
-                        <button class="btn secondary" onclick="game && game.resetToDefaults()">Restaurar Padrões</button>
-                    </div>
-                </div>
-            </div>
-        </div>
-
-        <!-- MODAL PRINCIPAL -->
-        <div id="modal" class="modal">
+        <!-- Modal -->
+        <div id="modal" class="modal" hidden>
             <div class="modal-content">
-                <h3 id="modal-title" class="modal-title"></h3>
-                <div id="modal-body" class="modal-text"></div>
+                <h3 id="modal-title"></h3>
+                <p id="modal-body"></p>
                 <div id="modal-choices"></div>
             </div>
         </div>
-
-        <!-- MODAL DE NOTÍCIAS -->
-        <div id="news-modal" class="modal">
-            <div class="modal-content news-modal-content">
-                <h3 id="news-title" class="modal-title">📰 Última Hora</h3>
-                <div id="news-body" class="modal-text"></div>
-                <div class="news-source" id="news-source"></div>
-                <div id="news-choices"></div>
-            </div>
-        </div>
-
-        <!-- PAINEL DE ESTATÍSTICAS AVANÇADAS -->
-        <div id="stats-panel" class="stats-panel" style="display: none;">
-            <div class="stats-panel-header">
-                <h4>📈 Estatísticas Detalhadas</h4>
-                <button class="close-btn" onclick="game && game.closeStatsPanel()">✕</button>
-            </div>
-            <div class="stats-panel-content" id="stats-panel-content">
-                <!-- Conteúdo preenchido dinamicamente -->
-            </div>
-        </div>
-
-        <!-- INDICADOR DE NOTIFICAÇÕES -->
-        <div id="notification-center" class="notification-center">
-            <!-- Notificações aparecem aqui -->
-        </div>
-
-        <!-- BARRA DE NAVEGAÇÃO INFERIOR (MOBILE) -->
-        <div class="bottom-nav" id="bottom-nav">
-            <button class="nav-btn" onclick="game && game.showAnalytics()">📊</button>
-            <button class="nav-btn" onclick="game && game.showStatsPanel()">📈</button>
-            <button class="nav-btn" onclick="game && game.showSettings()">⚙️</button>
-            <button class="nav-btn" onclick="game && game.exportToPDF()">📄</button>
-        </div>
     </div>
 
-    <!-- JavaScript principal do jogo -->
+    <!-- Script local -->
     <script src="script.js"></script>
 </body>
 </html>

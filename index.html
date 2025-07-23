@@ -434,9 +434,9 @@
                 <span class="subtitle" id="header-subtitle">Simulador Político</span>
             </div>
             <div class="header-controls">
-                <button class="icon-btn" id="save-btn" title="Salvar Jogo" onclick="game.saveGame()">💾</button>
-                <button class="icon-btn" id="load-btn" title="Carregar Jogo" onclick="game.loadGame()">📁</button>
-                <button class="icon-btn" id="export-btn" title="Exportar PDF" onclick="game.exportToPDF()">📄</button>
+                <button class="icon-btn" id="save-btn" title="Salvar Jogo" onclick="game && game.saveGame()">💾</button>
+                <button class="icon-btn" id="load-btn" title="Carregar Jogo" onclick="game && game.loadGame()">📁</button>
+                <button class="icon-btn" id="export-btn" title="Exportar PDF" onclick="game && game.exportToPDF()">📄</button>
                 <div id="term-display" style="font-size: 14px; font-weight: 600;"></div>
             </div>
         </div>
@@ -471,7 +471,7 @@
                     <button id="start-game" class="btn" disabled>Iniciar Campanha</button>
                     
                     <div style="text-align: center; margin-top: 15px;">
-                        <button class="btn secondary" onclick="game.loadGame()">Continuar Jogo Salvo</button>
+                        <button class="btn secondary" onclick="game && game.loadGame()">Continuar Jogo Salvo</button>
                     </div>
                 </div>
             </div>
@@ -531,12 +531,27 @@
                 // Sistema de IA e inteligência avançada
                 this.aiSystem = {
                     adaptiveDifficulty: 1.0,
-                    playerBehaviorPattern: {},
+                    playerBehaviorPattern: { aggressive: 0, conservative: 0, populist: 0 },
                     contextualEvents: [],
                     politicalTrends: {}
                 };
                 
                 // Cache de elementos DOM
+                this.dom = {};
+                this.initDOMCache();
+
+                this.gameHistory = {
+                    actions: [],
+                    events: [],
+                    decisions: [],
+                    performance: {}
+                };
+
+                this.philosophyTexts = this.initPhilosophyTexts();
+                this.init();
+            }
+
+            initDOMCache() {
                 this.dom = {
                     screens: document.querySelectorAll('.screen'),
                     modal: document.getElementById('modal'),
@@ -550,20 +565,11 @@
                     philosophyPreview: document.getElementById('philosophy-preview'),
                     startGameBtn: document.getElementById('start-game'),
                 };
-
-                this.gameHistory = {
-                    actions: [],
-                    events: [],
-                    decisions: [],
-                    performance: {}
-                };
-
-                this.philosophyTexts = this.initPhilosophyTexts();
-                this.init();
             }
 
             // === INICIALIZAÇÃO ===
             init() {
+                // Limpa timers existentes
                 Object.values(this.timers || {}).forEach(timer => clearInterval(timer));
                 
                 this.player = this.getInitialPlayerState();
@@ -670,34 +676,40 @@
                 const event = availableEvents[Math.floor(Math.random() * availableEvents.length)];
                 
                 // Ajusta intensidade baseada na dificuldade
-                event.choices.forEach(choice => {
-                    Object.keys(choice.effects).forEach(stat => {
-                        choice.effects[stat] = Math.round(choice.effects[stat] * difficulty);
+                if (event && event.choices) {
+                    event.choices.forEach(choice => {
+                        Object.keys(choice.effects).forEach(stat => {
+                            choice.effects[stat] = Math.round(choice.effects[stat] * difficulty);
+                        });
                     });
-                });
+                }
 
                 return event;
             }
 
             // === SETUP E EVENT LISTENERS ===
             setupEventListeners() {
-                // Remove listeners antigos e adiciona novos
-                const newStartBtn = this.dom.startGameBtn.cloneNode(true);
-                this.dom.startGameBtn.parentNode.replaceChild(newStartBtn, this.dom.startGameBtn);
-                this.dom.startGameBtn = newStartBtn;
-                
-                this.dom.startGameBtn.addEventListener('click', () => this.startCampaign());
+                // Remove listeners antigos para evitar duplicação
+                if (this.dom.startGameBtn) {
+                    const newStartBtn = this.dom.startGameBtn.cloneNode(true);
+                    this.dom.startGameBtn.parentNode.replaceChild(newStartBtn, this.dom.startGameBtn);
+                    this.dom.startGameBtn = newStartBtn;
+                    this.dom.startGameBtn.addEventListener('click', () => this.startCampaign());
+                }
 
-                this.dom.candidateNameInput.addEventListener('input', (e) => {
-                    this.player.name = e.target.value.trim();
-                    this.checkSetupComplete();
-                });
+                if (this.dom.candidateNameInput) {
+                    this.dom.candidateNameInput.addEventListener('input', (e) => {
+                        this.player.name = e.target.value.trim();
+                        this.checkSetupComplete();
+                    });
+                }
 
+                // Reconstroi listeners para botões de ideologia
                 this.dom.ideologyBtns.forEach(btn => {
                     const newBtn = btn.cloneNode(true);
                     btn.parentNode.replaceChild(newBtn, btn);
                     newBtn.addEventListener('click', () => {
-                        this.dom.ideologyBtns.forEach(b => b.classList.remove('selected'));
+                        document.querySelectorAll('.ideology-btn').forEach(b => b.classList.remove('selected'));
                         newBtn.classList.add('selected');
                         this.player.ideology = newBtn.dataset.ideology;
                         this.showPhilosophyPreview();
@@ -705,15 +717,15 @@
                     });
                 });
 
-                // Atualiza referência após substituição
+                // Atualiza cache DOM
                 this.dom.ideologyBtns = document.querySelectorAll('.ideology-btn');
             }
 
             resetUI() {
-                this.dom.candidateNameInput.value = '';
+                if (this.dom.candidateNameInput) this.dom.candidateNameInput.value = '';
                 this.dom.ideologyBtns.forEach(b => b.classList.remove('selected'));
-                this.dom.philosophyPreview.style.display = 'none';
-                this.dom.startGameBtn.disabled = true;
+                if (this.dom.philosophyPreview) this.dom.philosophyPreview.style.display = 'none';
+                if (this.dom.startGameBtn) this.dom.startGameBtn.disabled = true;
             }
 
             initPhilosophyTexts() {
@@ -725,23 +737,29 @@
             }
 
             showPhilosophyPreview() {
-                const preview = this.dom.philosophyPreview;
-                preview.textContent = this.philosophyTexts[this.player.ideology];
-                preview.style.display = 'block';
+                if (this.dom.philosophyPreview && this.philosophyTexts[this.player.ideology]) {
+                    this.dom.philosophyPreview.textContent = this.philosophyTexts[this.player.ideology];
+                    this.dom.philosophyPreview.style.display = 'block';
+                }
             }
 
             checkSetupComplete() {
-                this.dom.startGameBtn.disabled = !this.player.name || !this.player.ideology;
+                if (this.dom.startGameBtn) {
+                    this.dom.startGameBtn.disabled = !this.player.name || !this.player.ideology;
+                }
             }
 
             // === TRANSIÇÕES DE ESTADO ===
             transitionToState(newState) {
                 this.gameState = newState;
-                this.dom.headerSubtitle.textContent = {
-                    setup: "Simulador Político",
-                    campaign: `Campanha de ${this.player.name}`,
-                    government: `Governo ${this.player.name}`
-                }[newState];
+                
+                if (this.dom.headerSubtitle) {
+                    this.dom.headerSubtitle.textContent = {
+                        setup: "Simulador Político",
+                        campaign: `Campanha de ${this.player.name}`,
+                        government: `Governo ${this.player.name}`
+                    }[newState];
+                }
 
                 this.showScreen(newState);
 
@@ -959,7 +977,7 @@
                         title: '📜 Reforma Constitucional', 
                         description: 'Mudanças estruturais na Constituição para governabilidade.', 
                         costs: { months: 12 }, 
-                        effects: { democracy: -15, politics: 25, economy: 10 },
+                        effects: { democracy: -15, economy: 10 },
                         type: 'aggressive',
                         philosophy: "Schmitt alertava sobre os riscos da exceção constitucional permanente."
                     }
@@ -1063,7 +1081,9 @@
 
             triggerIntelligentEvent() {
                 const event = this.generateIntelligentEvent();
-                this.showEventModal(event);
+                if (event) {
+                    this.showEventModal(event);
+                }
             }
 
             showEventModal(event) {
@@ -1367,7 +1387,8 @@
             // === FUNÇÕES DE UI E RENDERIZAÇÃO ===
             showScreen(screenId) {
                 this.dom.screens.forEach(s => s.classList.remove('active'));
-                document.getElementById(screenId).classList.add('active');
+                const screen = document.getElementById(screenId);
+                if (screen) screen.classList.add('active');
             }
 
             renderActions(containerId, actions, callback) {
@@ -1407,6 +1428,8 @@
             }
 
             showModal(title, content, choices = []) {
+                if (!this.dom.modal) return;
+                
                 this.dom.modalTitle.textContent = title;
                 this.dom.modalBody.innerHTML = content.replace(/\n/g, '<br>');
                 this.dom.modalChoices.innerHTML = '';

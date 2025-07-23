@@ -1,0 +1,1545 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>República Digital - Simulador Político</title>
+    <!-- jsPDF para geração de PDF -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+    <style>
+        /* === RESET E BASE === */
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            -webkit-font-smoothing: antialiased;
+        }
+
+        :root {
+            --primary: #2c3e50;
+            --secondary: #34495e;
+            --accent: #3498db;
+            --success: #27ae60;
+            --warning: #f39c12;
+            --danger: #e74c3c;
+            --text: #ecf0f1;
+            --text-secondary: #bdc3c7;
+            --bg-gradient: linear-gradient(135deg, #0c1426 0%, #1e3c72 100%);
+            --shadow: 0 4px 20px rgba(0,0,0,0.3);
+        }
+
+        html, body {
+            width: 100%;
+            height: 100%;
+            overflow: hidden;
+            font-family: 'SF Pro Display', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: var(--bg-gradient);
+            color: var(--text);
+        }
+
+        /* === CONTAINERS === */
+        .app {
+            height: 100vh;
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+        }
+
+        .header {
+            padding: 15px 20px;
+            background: rgba(0,0,0,0.3);
+            border-bottom: 1px solid rgba(255,255,255,0.1);
+            backdrop-filter: blur(10px);
+            -webkit-backdrop-filter: blur(10px);
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            flex-shrink: 0;
+        }
+
+        .title {
+            font-size: 20px;
+            font-weight: 600;
+            color: var(--accent);
+        }
+
+        .subtitle {
+            font-size: 12px;
+            opacity: 0.7;
+            margin-left: 10px;
+        }
+
+        .header-controls {
+            display: flex;
+            gap: 10px;
+            align-items: center;
+        }
+
+        .icon-btn {
+            background: rgba(255,255,255,0.1);
+            border: none;
+            color: var(--text);
+            padding: 8px;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 16px;
+            transition: all 0.2s ease;
+        }
+
+        .icon-btn:hover {
+            background: rgba(255,255,255,0.2);
+        }
+
+        .main-content {
+            flex: 1;
+            padding: 20px;
+            overflow-y: auto;
+            -webkit-overflow-scrolling: touch;
+        }
+
+        /* === TELAS === */
+        .screen {
+            display: none;
+            animation: slideIn 0.5s cubic-bezier(0.25, 1, 0.5, 1);
+        }
+
+        .screen.active {
+            display: block;
+        }
+
+        /* === COMPONENTES MINIMALISTAS === */
+        .card {
+            background: rgba(255,255,255,0.05);
+            border: 1px solid rgba(255,255,255,0.1);
+            border-radius: 12px;
+            padding: 20px;
+            margin-bottom: 20px;
+            backdrop-filter: blur(5px);
+        }
+
+        .card h3 {
+            text-align: center;
+            font-weight: 600;
+            margin-bottom: 15px;
+        }
+
+        .input-field {
+            width: 100%;
+            padding: 12px 16px;
+            background: rgba(0,0,0,0.2);
+            border: 1px solid rgba(255,255,255,0.1);
+            border-radius: 8px;
+            color: var(--text);
+            font-size: 16px;
+            margin-bottom: 10px;
+        }
+
+        .input-field:focus {
+            outline: none;
+            border-color: var(--accent);
+            box-shadow: 0 0 0 3px rgba(52,152,219,0.3);
+        }
+
+        .ideology-grid {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 10px;
+            margin: 15px 0;
+        }
+
+        .ideology-btn {
+            padding: 15px 10px;
+            background: rgba(255,255,255,0.05);
+            border: 1px solid rgba(255,255,255,0.15);
+            border-radius: 8px;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            text-align: center;
+            font-size: 14px;
+        }
+
+        .ideology-btn:hover {
+            background: rgba(255,255,255,0.1);
+            transform: translateY(-2px);
+        }
+
+        .ideology-btn.selected {
+            background: var(--accent);
+            border-color: var(--accent);
+            color: white;
+            transform: scale(1.05);
+            box-shadow: 0 0 15px rgba(52,152,219,0.4);
+        }
+
+        .btn {
+            background: var(--accent);
+            color: white;
+            border: none;
+            padding: 14px 24px;
+            border-radius: 8px;
+            font-size: 16px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            width: 100%;
+            margin-top: 10px;
+        }
+
+        .btn:hover:not(:disabled) {
+            background: #4aa3df;
+            transform: translateY(-2px);
+            box-shadow: var(--shadow);
+        }
+
+        .btn:disabled {
+            background: var(--secondary);
+            opacity: 0.5;
+            cursor: not-allowed;
+        }
+
+        .btn.secondary {
+            background: var(--secondary);
+            width: auto;
+            padding: 10px 20px;
+            margin: 5px;
+        }
+
+        /* === STATS MINIMALISTAS === */
+        .stats-compact {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(100px, 1fr));
+            gap: 12px;
+            margin: 20px 0;
+        }
+
+        .stat-item {
+            text-align: center;
+            padding: 10px 5px;
+            background: rgba(0,0,0,0.2);
+            border-radius: 6px;
+            border-left: 3px solid var(--accent);
+        }
+
+        .stat-value {
+            font-size: 20px;
+            font-weight: 700;
+            color: var(--accent);
+        }
+
+        .stat-label {
+            font-size: 11px;
+            opacity: 0.7;
+            margin-top: 3px;
+        }
+
+        /* === SISTEMA DE RECURSOS/AÇÕES === */
+        .resources-bar {
+            display: flex;
+            justify-content: space-around;
+            padding: 15px;
+            background: rgba(0,0,0,0.3);
+            border-radius: 8px;
+            margin-bottom: 20px;
+            font-size: 14px;
+        }
+
+        .resource { 
+            display: flex; 
+            align-items: center; 
+            gap: 8px; 
+        }
+
+        .actions-list {
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+        }
+
+        .action-card {
+            background: rgba(255,255,255,0.05);
+            border: 1px solid rgba(255,255,255,0.1);
+            border-radius: 8px;
+            padding: 15px;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            position: relative;
+        }
+
+        .action-card:hover:not(.disabled) {
+            background: rgba(255,255,255,0.08);
+            border-color: rgba(255,255,255,0.3);
+        }
+
+        .action-card.disabled {
+            opacity: 0.4;
+            cursor: not-allowed;
+            background: transparent;
+        }
+
+        .action-title {
+            font-size: 15px;
+            font-weight: 600;
+            margin-bottom: 8px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .action-cost {
+            font-size: 12px;
+            color: var(--warning);
+            background: rgba(243,156,18,0.2);
+            padding: 3px 10px;
+            border-radius: 12px;
+        }
+
+        .action-description {
+            font-size: 13px;
+            opacity: 0.8;
+            margin-bottom: 10px;
+            line-height: 1.4;
+        }
+
+        .action-effects {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 8px;
+            font-size: 11px;
+        }
+
+        .effect { 
+            padding: 2px 8px; 
+            border-radius: 10px; 
+            background: rgba(255,255,255,0.1); 
+        }
+        .effect.positive { color: var(--success); }
+        .effect.negative { color: var(--danger); }
+
+        /* === MODAL === */
+        .modal {
+            position: fixed;
+            top: 0; left: 0;
+            width: 100%; height: 100%;
+            background: rgba(0,0,0,0.85);
+            backdrop-filter: blur(5px);
+            display: none;
+            justify-content: center;
+            align-items: center;
+            z-index: 1000;
+            animation: fadeIn 0.3s ease;
+        }
+
+        .modal.active { display: flex; }
+
+        .modal-content {
+            background: var(--primary);
+            border-radius: 12px;
+            padding: 25px;
+            width: 90%;
+            max-width: 400px;
+            max-height: 80vh;
+            overflow-y: auto;
+            box-shadow: var(--shadow);
+            animation: scaleUp 0.3s cubic-bezier(0.165, 0.84, 0.44, 1);
+        }
+
+        .modal-title { 
+            font-size: 20px; 
+            font-weight: 600; 
+            margin-bottom: 15px; 
+            text-align: center; 
+        }
+        .modal-text { 
+            font-size: 14px; 
+            line-height: 1.6; 
+            margin-bottom: 20px; 
+            opacity: 0.9; 
+        }
+        #modal-choices { 
+            display: flex; 
+            flex-direction: column; 
+            gap: 10px; 
+        }
+
+        .philosophy-quote {
+            font-style: italic;
+            background: rgba(0,0,0,0.2);
+            padding: 15px;
+            border-left: 3px solid var(--accent);
+            margin: 20px 0;
+            font-size: 13px;
+            line-height: 1.5;
+            border-radius: 4px;
+        }
+
+        /* === PROGRESS BARS === */
+        .progress-container { margin: 20px 0; }
+        .progress-label { 
+            display: flex; 
+            justify-content: space-between; 
+            font-size: 12px; 
+            margin-bottom: 8px; 
+        }
+        .progress-bar { 
+            height: 8px; 
+            background: rgba(0,0,0,0.3); 
+            border-radius: 4px; 
+            overflow: hidden; 
+        }
+        .progress-fill { 
+            height: 100%; 
+            transition: width 0.4s ease; 
+            border-radius: 4px; 
+        }
+        #popularity-bar { 
+            background: linear-gradient(90deg, var(--accent), #8e44ad); 
+        }
+        #impeachment-bar { 
+            background: linear-gradient(90deg, var(--success), var(--warning), var(--danger)); 
+        }
+
+        /* === NOTIFICAÇÕES === */
+        .notification {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            background: var(--accent);
+            color: white;
+            padding: 12px 20px;
+            border-radius: 8px;
+            box-shadow: var(--shadow);
+            z-index: 1001;
+            animation: slideInRight 0.3s ease;
+        }
+
+        /* === RESPONSIVE & ANIMATIONS === */
+        @media (max-width: 480px) {
+            .ideology-grid { grid-template-columns: 1fr; }
+            .stats-compact { grid-template-columns: repeat(2, 1fr); }
+            .main-content { padding: 15px; }
+            .header-controls { display: none; }
+        }
+
+        @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
+        @keyframes scaleUp { from { transform: scale(0.9); opacity: 0; } to { transform: scale(1); opacity: 1; } }
+        @keyframes slideIn { from { transform: translateY(20px); opacity: 0; } to { transform: translateY(0); opacity: 1; } }
+        @keyframes slideInRight { from { transform: translateX(100%); } to { transform: translateX(0); } }
+    </style>
+</head>
+<body>
+    <div class="app">
+        <div class="header">
+            <div>
+                <span class="title">📊 República Digital</span>
+                <span class="subtitle" id="header-subtitle">Simulador Político</span>
+            </div>
+            <div class="header-controls">
+                <button class="icon-btn" id="save-btn" title="Salvar Jogo" onclick="game.saveGame()">💾</button>
+                <button class="icon-btn" id="load-btn" title="Carregar Jogo" onclick="game.loadGame()">📁</button>
+                <button class="icon-btn" id="export-btn" title="Exportar PDF" onclick="game.exportToPDF()">📄</button>
+                <div id="term-display" style="font-size: 14px; font-weight: 600;"></div>
+            </div>
+        </div>
+
+        <div class="main-content">
+            <!-- TELA DE CRIAÇÃO -->
+            <div id="setup" class="screen active">
+                <div class="card">
+                    <h3>Configuração do Candidato</h3>
+                    <input type="text" id="candidate-name" class="input-field" placeholder="Nome do candidato" maxlength="50">
+                    
+                    <div style="margin: 20px 0;">
+                        <label style="display: block; margin-bottom: 10px;">Orientação Política:</label>
+                        <div class="ideology-grid">
+                            <div class="ideology-btn" data-ideology="esquerda">
+                                <div>🌹 Esquerda</div>
+                                <div style="font-size: 10px; opacity: 0.8;">Igualdade</div>
+                            </div>
+                            <div class="ideology-btn" data-ideology="centro">
+                                <div>⚖️ Centro</div>
+                                <div style="font-size: 10px; opacity: 0.8;">Equilíbrio</div>
+                            </div>
+                            <div class="ideology-btn" data-ideology="direita">
+                                <div>💼 Direita</div>
+                                <div style="font-size: 10px; opacity: 0.8;">Liberdade</div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div id="philosophy-preview" class="philosophy-quote" style="display: none;"></div>
+                    
+                    <button id="start-game" class="btn" disabled>Iniciar Campanha</button>
+                    
+                    <div style="text-align: center; margin-top: 15px;">
+                        <button class="btn secondary" onclick="game.loadGame()">Continuar Jogo Salvo</button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- TELA DE CAMPANHA -->
+            <div id="campaign" class="screen">
+                <div class="resources-bar">
+                    <div class="resource">⏰ <span id="days-left">90</span> dias</div>
+                    <div class="resource">💰 R$<span id="funds">50</span>M</div>
+                    <div class="resource">🤝 <span id="support">0</span>% Apoio</div>
+                </div>
+                <div class="stats-compact" id="campaign-stats"></div>
+                <div class="actions-list" id="campaign-actions"></div>
+            </div>
+
+            <!-- TELA DE GOVERNO -->
+            <div id="government" class="screen">
+                <div class="resources-bar">
+                    <div class="resource">🗓️ <span id="months-left">48</span> meses</div>
+                </div>
+                <div class="stats-compact" id="government-stats"></div>
+                <div class="progress-container">
+                    <div class="progress-label">
+                        <span>Aprovação Popular</span>
+                        <span id="popularity-percent">60%</span>
+                    </div>
+                    <div class="progress-bar">
+                        <div class="progress-fill" id="popularity-bar" style="width: 60%"></div>
+                    </div>
+                </div>
+                <div class="progress-container">
+                    <div class="progress-label">
+                        <span>Risco de Impeachment</span>
+                        <span id="impeachment-percent">15%</span>
+                    </div>
+                    <div class="progress-bar">
+                        <div class="progress-fill" id="impeachment-bar" style="width: 15%"></div>
+                    </div>
+                </div>
+                <div class="actions-list" id="government-actions"></div>
+            </div>
+        </div>
+
+        <!-- MODAL -->
+        <div id="modal" class="modal">
+            <div class="modal-content">
+                <h3 id="modal-title" class="modal-title"></h3>
+                <div id="modal-body" class="modal-text"></div>
+                <div id="modal-choices"></div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        class RepublicaDigital {
+            constructor() {
+                // Sistema de IA e inteligência avançada
+                this.aiSystem = {
+                    adaptiveDifficulty: 1.0,
+                    playerBehaviorPattern: {},
+                    contextualEvents: [],
+                    politicalTrends: {}
+                };
+                
+                // Cache de elementos DOM
+                this.dom = {
+                    screens: document.querySelectorAll('.screen'),
+                    modal: document.getElementById('modal'),
+                    modalTitle: document.getElementById('modal-title'),
+                    modalBody: document.getElementById('modal-body'),
+                    modalChoices: document.getElementById('modal-choices'),
+                    headerSubtitle: document.getElementById('header-subtitle'),
+                    termDisplay: document.getElementById('term-display'),
+                    candidateNameInput: document.getElementById('candidate-name'),
+                    ideologyBtns: document.querySelectorAll('.ideology-btn'),
+                    philosophyPreview: document.getElementById('philosophy-preview'),
+                    startGameBtn: document.getElementById('start-game'),
+                };
+
+                this.gameHistory = {
+                    actions: [],
+                    events: [],
+                    decisions: [],
+                    performance: {}
+                };
+
+                this.philosophyTexts = this.initPhilosophyTexts();
+                this.init();
+            }
+
+            // === INICIALIZAÇÃO ===
+            init() {
+                Object.values(this.timers || {}).forEach(timer => clearInterval(timer));
+                
+                this.player = this.getInitialPlayerState();
+                this.gameState = 'setup';
+                this.timers = { campaign: null, government: null };
+                
+                this.setupEventListeners();
+                this.resetUI();
+                this.updateUI();
+                this.showScreen('setup');
+                this.autoSaveInterval();
+            }
+
+            getInitialPlayerState() {
+                return {
+                    name: '', 
+                    ideology: '', 
+                    term: 1, 
+                    maxTerms: 2,
+                    startTime: Date.now(),
+                    stats: {
+                        days: 90, funds: 50, support: 0, approval: 45, 
+                        coalitions: 2, mediaPresence: 30, debateScore: 0,
+                        months: 48, 
+                        economy: 50, social: 50, security: 50, 
+                        international: 50, environment: 50, democracy: 75,
+                        popularity: 60, impeachmentRisk: 15
+                    }
+                };
+            }
+
+            // === SISTEMA DE INTELIGÊNCIA AVANÇADA ===
+            updateAI() {
+                // Analisa padrão de comportamento do jogador
+                const recentActions = this.gameHistory.actions.slice(-5);
+                this.aiSystem.playerBehaviorPattern = {
+                    aggressive: recentActions.filter(a => a.type === 'aggressive').length,
+                    conservative: recentActions.filter(a => a.type === 'conservative').length,
+                    populist: recentActions.filter(a => a.type === 'populist').length
+                };
+
+                // Ajusta dificuldade dinamicamente
+                const performance = this.calculateOverallPerformance();
+                if (performance > 75) {
+                    this.aiSystem.adaptiveDifficulty = Math.min(2.0, this.aiSystem.adaptiveDifficulty + 0.1);
+                } else if (performance < 40) {
+                    this.aiSystem.adaptiveDifficulty = Math.max(0.5, this.aiSystem.adaptiveDifficulty - 0.1);
+                }
+            }
+
+            calculateOverallPerformance() {
+                if (this.gameState === 'campaign') {
+                    return (this.player.stats.support + this.player.stats.approval) / 2;
+                } else {
+                    const govStats = ['economy', 'social', 'security', 'international', 'environment'];
+                    const avg = govStats.reduce((sum, stat) => sum + this.player.stats[stat], 0) / govStats.length;
+                    return avg;
+                }
+            }
+
+            generateIntelligentEvent() {
+                const pattern = this.aiSystem.playerBehaviorPattern;
+                const difficulty = this.aiSystem.adaptiveDifficulty;
+                
+                // Eventos adaptativos baseados no comportamento do jogador
+                const contextualEvents = {
+                    aggressive: [
+                        {
+                            title: "Reação Internacional",
+                            description: "Suas políticas agressivas geram tensão diplomática.",
+                            choices: [
+                                { text: "Manter posição", effects: { international: -10, popularity: 5 } },
+                                { text: "Buscar diálogo", effects: { international: 5, popularity: -3 } }
+                            ]
+                        }
+                    ],
+                    conservative: [
+                        {
+                            title: "Pressão por Mudanças",
+                            description: "Movimentos sociais cobram reformas mais ousadas.",
+                            choices: [
+                                { text: "Acelerar reformas", effects: { social: 10, economy: -5 } },
+                                { text: "Manter gradualismo", effects: { social: -5, democracy: 5 } }
+                            ]
+                        }
+                    ],
+                    populist: [
+                        {
+                            title: "Questões Fiscais",
+                            description: "Economistas alertam sobre gastos excessivos.",
+                            choices: [
+                                { text: "Cortar gastos", effects: { economy: 10, popularity: -15 } },
+                                { text: "Manter programas", effects: { economy: -8, popularity: 8 } }
+                            ]
+                        }
+                    ]
+                };
+
+                const dominantPattern = Object.keys(pattern).reduce((a, b) => 
+                    pattern[a] > pattern[b] ? a : b
+                );
+
+                const availableEvents = contextualEvents[dominantPattern] || contextualEvents.conservative;
+                const event = availableEvents[Math.floor(Math.random() * availableEvents.length)];
+                
+                // Ajusta intensidade baseada na dificuldade
+                event.choices.forEach(choice => {
+                    Object.keys(choice.effects).forEach(stat => {
+                        choice.effects[stat] = Math.round(choice.effects[stat] * difficulty);
+                    });
+                });
+
+                return event;
+            }
+
+            // === SETUP E EVENT LISTENERS ===
+            setupEventListeners() {
+                // Remove listeners antigos e adiciona novos
+                const newStartBtn = this.dom.startGameBtn.cloneNode(true);
+                this.dom.startGameBtn.parentNode.replaceChild(newStartBtn, this.dom.startGameBtn);
+                this.dom.startGameBtn = newStartBtn;
+                
+                this.dom.startGameBtn.addEventListener('click', () => this.startCampaign());
+
+                this.dom.candidateNameInput.addEventListener('input', (e) => {
+                    this.player.name = e.target.value.trim();
+                    this.checkSetupComplete();
+                });
+
+                this.dom.ideologyBtns.forEach(btn => {
+                    const newBtn = btn.cloneNode(true);
+                    btn.parentNode.replaceChild(newBtn, btn);
+                    newBtn.addEventListener('click', () => {
+                        this.dom.ideologyBtns.forEach(b => b.classList.remove('selected'));
+                        newBtn.classList.add('selected');
+                        this.player.ideology = newBtn.dataset.ideology;
+                        this.showPhilosophyPreview();
+                        this.checkSetupComplete();
+                    });
+                });
+
+                // Atualiza referência após substituição
+                this.dom.ideologyBtns = document.querySelectorAll('.ideology-btn');
+            }
+
+            resetUI() {
+                this.dom.candidateNameInput.value = '';
+                this.dom.ideologyBtns.forEach(b => b.classList.remove('selected'));
+                this.dom.philosophyPreview.style.display = 'none';
+                this.dom.startGameBtn.disabled = true;
+            }
+
+            initPhilosophyTexts() {
+                return {
+                    esquerda: "\"Rousseau argumentava que a propriedade privada era fonte de desigualdade e que o Estado deveria representar a vontade geral do povo.\"",
+                    centro: "\"John Stuart Mill estabeleceu o princípio do dano, argumentando que o Estado só deveria intervir para prevenir danos a outros.\"",
+                    direita: "\"Adam Smith estabeleceu os fundamentos do liberalismo econômico, defendendo que a liberdade individual geraria prosperidade.\""
+                };
+            }
+
+            showPhilosophyPreview() {
+                const preview = this.dom.philosophyPreview;
+                preview.textContent = this.philosophyTexts[this.player.ideology];
+                preview.style.display = 'block';
+            }
+
+            checkSetupComplete() {
+                this.dom.startGameBtn.disabled = !this.player.name || !this.player.ideology;
+            }
+
+            // === TRANSIÇÕES DE ESTADO ===
+            transitionToState(newState) {
+                this.gameState = newState;
+                this.dom.headerSubtitle.textContent = {
+                    setup: "Simulador Político",
+                    campaign: `Campanha de ${this.player.name}`,
+                    government: `Governo ${this.player.name}`
+                }[newState];
+
+                this.showScreen(newState);
+
+                switch(newState) {
+                    case 'campaign':
+                        this.setupCampaignActions();
+                        this.startCampaignTimer();
+                        break;
+                    case 'government':
+                        this.setupGovernmentActions();
+                        this.startGovernmentTimer();
+                        break;
+                }
+                this.updateUI();
+                this.saveGame(); // Auto-save em transições
+            }
+
+            startCampaign() { 
+                this.transitionToState('campaign'); 
+            }
+            
+            startGovernment() { 
+                this.transitionToState('government'); 
+            }
+
+            // === LÓGICA DE CAMPANHA ===
+            setupCampaignActions() {
+                const actions = [
+                    { 
+                        id: 'social_media', 
+                        title: '📱 Campanha Digital', 
+                        description: 'Estratégia focada em redes sociais e influenciadores digitais.', 
+                        costs: { funds: 8, days: 5 }, 
+                        effects: { support: 12, mediaPresence: 15, approval: 8 },
+                        type: 'populist',
+                        philosophy: "A comunicação digital representa a nova ágora democrática de nosso tempo."
+                    },
+                    { 
+                        id: 'traditional_media', 
+                        title: '📺 Mídia Tradicional', 
+                        description: 'Investimento em TV, rádio e jornais estabelecidos.', 
+                        costs: { funds: 15, days: 7 }, 
+                        effects: { approval: 20, mediaPresence: 25, support: 8 },
+                        type: 'conservative',
+                        philosophy: "Burke defendia as instituições estabelecidas como fonte de legitimidade."
+                    },
+                    { 
+                        id: 'grassroots', 
+                        title: '🚶 Base Popular', 
+                        description: 'Mobilização direta com comícios e organizações locais.', 
+                        costs: { funds: 5, days: 10 }, 
+                        effects: { support: 25, coalitions: 1, approval: 15 },
+                        type: 'populist',
+                        philosophy: "Rousseau acreditava na soberania popular como única fonte legítima de poder."
+                    },
+                    { 
+                        id: 'debate_prep', 
+                        title: '🎙️ Preparação para Debates', 
+                        description: 'Treinamento intensivo e assessoria especializada.', 
+                        costs: { funds: 10, days: 8 }, 
+                        effects: { debateScore: 30, approval: 12, mediaPresence: 10 },
+                        type: 'conservative',
+                        philosophy: "Mill enfatizava que o debate livre de ideias é essencial para o progresso."
+                    },
+                    { 
+                        id: 'coalition_building', 
+                        title: '🤝 Articulação Política', 
+                        description: 'Negociações com partidos, governadores e lideranças.', 
+                        costs: { funds: 20, days: 12 }, 
+                        effects: { coalitions: 3, support: 18, approval: 5 },
+                        type: 'conservative',
+                        philosophy: "Tocqueville destacou a importância das instituições intermediárias."
+                    },
+                    { 
+                        id: 'attack_ads', 
+                        title: '⚔️ Campanha Negativa', 
+                        description: 'Ataques direcionados aos principais adversários.', 
+                        costs: { funds: 12, days: 6 }, 
+                        effects: { support: 15, approval: -5, mediaPresence: 20 },
+                        type: 'aggressive',
+                        philosophy: "Maquiavel argumentava que fins justificam os meios na política."
+                    }
+                ];
+
+                this.renderActions('campaign-actions', actions, this.executeCampaignAction.bind(this));
+            }
+
+            executeCampaignAction(action) {
+                if (!this.canAffordAction(action.costs)) {
+                    this.showNotification("Recursos insuficientes!");
+                    return;
+                }
+
+                this.applyCosts(action.costs);
+                this.applyEffects(action.effects);
+                
+                // Registra ação no histórico
+                this.gameHistory.actions.push({
+                    type: action.type,
+                    timestamp: Date.now(),
+                    action: action.id,
+                    state: 'campaign'
+                });
+
+                this.updateAI();
+                this.updateUI();
+                this.setupCampaignActions();
+                
+                // Chance de evento inteligente
+                if (Math.random() < 0.3) {
+                    this.triggerIntelligentEvent();
+                }
+
+                if (this.player.stats.days <= 0) {
+                    this.endCampaign();
+                }
+            }
+
+            startCampaignTimer() {
+                this.timers.campaign = setInterval(() => {
+                    if (this.gameState !== 'campaign') {
+                        clearInterval(this.timers.campaign);
+                        return;
+                    }
+                    
+                    this.player.stats.days--;
+                    if (this.player.stats.days <= 0) {
+                        this.endCampaign();
+                    }
+                    this.updateUI();
+                }, 2000);
+            }
+
+            endCampaign() {
+                clearInterval(this.timers.campaign);
+                const finalScore = this.calculateElectionScore();
+                
+                this.gameHistory.performance.electionScore = finalScore;
+                
+                if (finalScore >= 60) {
+                    this.showModal(
+                        "🎉 VITÓRIA ELEITORAL!", 
+                        `Parabéns, ${this.player.name}! Com ${finalScore}% dos votos, você foi eleito Presidente do Brasil.`, 
+                        [{ text: "Assumir Presidência", callback: () => this.startGovernment() }]
+                    );
+                } else {
+                    this.gameHistory.performance.gameEnded = 'electoral_defeat';
+                    this.showModal(
+                        "❌ DERROTA ELEITORAL", 
+                        `Você obteve ${finalScore}% dos votos. Não foi suficiente para vencer a eleição.`, 
+                        [
+                            { text: "Exportar Relatório", callback: () => this.exportToPDF() },
+                            { text: "Novo Jogo", callback: () => this.init() }
+                        ]
+                    );
+                }
+            }
+
+            calculateElectionScore() {
+                const { support, approval, debateScore, mediaPresence } = this.player.stats;
+                const score = (support * 0.4) + (approval * 0.3) + (debateScore * 0.2) + (mediaPresence * 0.1);
+                return Math.max(0, Math.round(score));
+            }
+
+            // === LÓGICA DE GOVERNO ===
+            setupGovernmentActions() {
+                const actions = [
+                    { 
+                        id: 'economic_reform', 
+                        title: '💰 Reforma Tributária', 
+                        description: 'Reestruturação completa do sistema tributário brasileiro.', 
+                        costs: { months: 6 }, 
+                        effects: { economy: 15, social: -5, democracy: -3 },
+                        type: 'conservative',
+                        philosophy: "Smith defendia que impostos deveriam ser proporcionais à capacidade."
+                    },
+                    { 
+                        id: 'social_program', 
+                        title: '👥 Renda Universal', 
+                        description: 'Programa de renda básica universal para todos os brasileiros.', 
+                        costs: { months: 8 }, 
+                        effects: { social: 25, economy: -10, democracy: 5 },
+                        type: 'populist',
+                        philosophy: "Rawls: desigualdades só são justas se beneficiarem os menos favorecidos."
+                    },
+                    { 
+                        id: 'security_op', 
+                        title: '🚔 Operação de Segurança', 
+                        description: 'Forças federais contra o crime organizado em todo território nacional.', 
+                        costs: { months: 4 }, 
+                        effects: { security: 20, democracy: -8, social: -5 },
+                        type: 'aggressive',
+                        philosophy: "Hobbes vs Locke: o eterno dilema entre segurança e liberdade."
+                    },
+                    { 
+                        id: 'env_policy', 
+                        title: '🌱 Política Ambiental', 
+                        description: 'Transição energética e proteção radical da Amazônia.', 
+                        costs: { months: 10 }, 
+                        effects: { environment: 30, economy: -8, international: 15 },
+                        type: 'progressive',
+                        philosophy: "Jonas propunha ética da responsabilidade para gerações futuras."
+                    },
+                    { 
+                        id: 'diplomatic_mission', 
+                        title: '🌍 Missão Diplomática', 
+                        description: 'Ofensiva diplomática para fortalecer posição internacional do Brasil.', 
+                        costs: { months: 5 }, 
+                        effects: { international: 20, economy: 5, democracy: 3 },
+                        type: 'conservative',
+                        philosophy: "Kant vislumbrava uma federação de nações livres e pacíficas."
+                    },
+                    { 
+                        id: 'constitutional_reform', 
+                        title: '📜 Reforma Constitucional', 
+                        description: 'Mudanças estruturais na Constituição para governabilidade.', 
+                        costs: { months: 12 }, 
+                        effects: { democracy: -15, politics: 25, economy: 10 },
+                        type: 'aggressive',
+                        philosophy: "Schmitt alertava sobre os riscos da exceção constitucional permanente."
+                    }
+                ];
+
+                this.renderActions('government-actions', actions, this.executeGovernmentAction.bind(this));
+            }
+
+            executeGovernmentAction(action) {
+                if (!this.canAffordAction(action.costs)) {
+                    this.showNotification("Tempo insuficiente!");
+                    return;
+                }
+
+                this.applyCosts(action.costs);
+                this.applyEffects(action.effects);
+                
+                // Registra no histórico
+                this.gameHistory.actions.push({
+                    type: action.type,
+                    timestamp: Date.now(),
+                    action: action.id,
+                    state: 'government'
+                });
+
+                this.calculateGovernmentMetrics();
+                this.updateAI();
+                this.updateUI();
+                this.setupGovernmentActions();
+                
+                // Eventos contextuais mais frequentes no governo
+                if (Math.random() < 0.4) {
+                    this.triggerIntelligentEvent();
+                }
+
+                if (this.player.stats.months <= 0) {
+                    this.endTerm();
+                }
+            }
+
+            startGovernmentTimer() {
+                this.timers.government = setInterval(() => {
+                    if (this.gameState !== 'government') {
+                        clearInterval(this.timers.government);
+                        return;
+                    }
+                    
+                    this.player.stats.months--;
+                    
+                    // Degradação natural mais inteligente
+                    const degradationRate = this.aiSystem.adaptiveDifficulty;
+                    ['economy', 'social', 'security', 'international', 'environment'].forEach(stat => {
+                        const decay = Math.random() * 1.5 * degradationRate;
+                        this.player.stats[stat] = Math.max(0, this.player.stats[stat] - decay);
+                    });
+
+                    this.calculateGovernmentMetrics();
+                    this.updateUI();
+                    
+                    if (this.player.stats.months <= 0) {
+                        this.endTerm();
+                    }
+                }, 3000);
+            }
+
+            calculateGovernmentMetrics() {
+                const { economy, social, security, environment, democracy } = this.player.stats;
+                const avgPerf = (economy + social + security + environment) / 4;
+                
+                // Cálculo mais sofisticado da popularidade
+                this.player.stats.popularity = Math.round(
+                    avgPerf * 0.6 + 
+                    democracy * 0.2 + 
+                    this.player.stats.popularity * 0.2
+                );
+
+                // Risco de impeachment baseado em múltiplos fatores
+                const democraticRisk = democracy < 50 ? (50 - democracy) * 2 : 0;
+                const popularityRisk = this.player.stats.popularity < 40 ? (40 - this.player.stats.popularity) * 1.5 : 0;
+                const economicRisk = economy < 30 ? (30 - economy) : 0;
+                
+                this.player.stats.impeachmentRisk = Math.min(100, democraticRisk + popularityRisk + economicRisk);
+
+                if (this.player.stats.impeachmentRisk >= 75) {
+                    this.triggerImpeachment();
+                }
+            }
+
+            triggerImpeachment() {
+                clearInterval(this.timers.government);
+                this.gameHistory.performance.gameEnded = 'impeachment';
+                this.showModal(
+                    "⚖️ PROCESSO DE IMPEACHMENT", 
+                    "O Congresso Nacional aprovou seu impeachment por crime de responsabilidade. Seu mandato chegou ao fim prematuramente.", 
+                    [
+                        { text: "Exportar Relatório", callback: () => this.exportToPDF() },
+                        { text: "Novo Jogo", callback: () => this.init() }
+                    ]
+                );
+            }
+
+            triggerIntelligentEvent() {
+                const event = this.generateIntelligentEvent();
+                this.showEventModal(event);
+            }
+
+            showEventModal(event) {
+                this.showModal(
+                    event.title, 
+                    `${event.description}\n\n"${event.philosophy || ''}"`, 
+                    event.choices.map(choice => ({
+                        text: choice.text,
+                        callback: () => {
+                            this.applyEffects(choice.effects);
+                            this.gameHistory.events.push({
+                                event: event.title,
+                                choice: choice.text,
+                                timestamp: Date.now()
+                            });
+                            this.updateUI();
+                        }
+                    }))
+                );
+            }
+
+            endTerm() {
+                clearInterval(this.timers.government);
+                
+                this.gameHistory.performance.finalPopularity = this.player.stats.popularity;
+                this.gameHistory.performance.completedTerms = this.player.term;
+                
+                if (this.player.term >= this.player.maxTerms) {
+                    this.gameHistory.performance.gameEnded = 'completed_max_terms';
+                    this.showModal(
+                        "🏆 CARREIRA PRESIDENCIAL COMPLETA", 
+                        "Você completou o máximo de mandatos constitucionais. Seu legado político está gravado na história do Brasil.", 
+                        [
+                            { text: "Ver Relatório Completo", callback: () => this.exportToPDF() },
+                            { text: "Nova Simulação", callback: () => this.init() }
+                        ]
+                    );
+                } else if (this.player.stats.popularity >= 55) {
+                    this.showModal(
+                        "🗳️ OPORTUNIDADE DE REELEIÇÃO", 
+                        `Sua aprovação de ${Math.round(this.player.stats.popularity)}% permite buscar a reeleição. Deseja concorrer novamente?`, 
+                        [
+                            { text: "Buscar Reeleição", callback: () => this.startReelection() },
+                            { text: "Retirar-se da Política", callback: () => this.showFinalResults() }
+                        ]
+                    );
+                } else {
+                    this.gameHistory.performance.gameEnded = 'low_popularity';
+                    this.showModal(
+                        "📉 FIM DE MANDATO", 
+                        `Com apenas ${Math.round(this.player.stats.popularity)}% de aprovação, a reeleição não é viável politicamente.`, 
+                        [
+                            { text: "Exportar Relatório", callback: () => this.exportToPDF() },
+                            { text: "Novo Jogo", callback: () => this.init() }
+                        ]
+                    );
+                }
+            }
+
+            startReelection() {
+                this.player.term++;
+                // Herda parte da performance anterior
+                this.player.stats.days = 90;
+                this.player.stats.funds = Math.max(30, Math.round(this.player.stats.popularity * 0.7));
+                this.player.stats.support = Math.round(this.player.stats.popularity * 0.4);
+                this.player.stats.approval = Math.round(this.player.stats.popularity * 0.8);
+                this.player.stats.months = 48;
+                
+                this.transitionToState('campaign');
+            }
+
+            showFinalResults() {
+                const govStats = ['economy', 'social', 'security', 'international', 'environment'];
+                const avgPerf = govStats.reduce((sum, stat) => sum + this.player.stats[stat], 0) / govStats.length;
+                
+                let evaluation = "Problemático 📉";
+                if (avgPerf >= 80) evaluation = "Exemplar 🏆";
+                else if (avgPerf >= 65) evaluation = "Muito Bom 🌟";
+                else if (avgPerf >= 50) evaluation = "Bom 👍";
+                else if (avgPerf >= 35) evaluation = "Regular 😐";
+
+                this.gameHistory.performance.finalEvaluation = evaluation;
+                this.gameHistory.performance.avgPerformance = Math.round(avgPerf);
+
+                this.showModal(
+                    "📊 LEGADO PRESIDENCIAL", 
+                    `<strong>Avaliação Final: ${evaluation}</strong><br><br>
+                     Performance Média: ${Math.round(avgPerf)}%<br>
+                     Mandatos Exercidos: ${this.player.term}<br>
+                     Aprovação Final: ${Math.round(this.player.stats.popularity)}%<br>
+                     Tempo Total: ${this.formatPlayTime()}`, 
+                    [
+                        { text: "Exportar Relatório Completo", callback: () => this.exportToPDF() },
+                        { text: "Nova Simulação", callback: () => this.init() }
+                    ]
+                );
+            }
+
+            formatPlayTime() {
+                const totalMs = Date.now() - this.player.startTime;
+                const minutes = Math.floor(totalMs / 60000);
+                const seconds = Math.floor((totalMs % 60000) / 1000);
+                return `${minutes}m ${seconds}s`;
+            }
+
+            // === SISTEMA DE SALVAMENTO ===
+            saveGame() {
+                const saveData = {
+                    player: this.player,
+                    gameState: this.gameState,
+                    gameHistory: this.gameHistory,
+                    aiSystem: this.aiSystem,
+                    saveTime: Date.now()
+                };
+                
+                try {
+                    localStorage.setItem('republicaDigital_save', JSON.stringify(saveData));
+                    this.showNotification("Jogo salvo automaticamente! 💾");
+                } catch(e) {
+                    console.error("Erro ao salvar:", e);
+                }
+            }
+
+            loadGame() {
+                try {
+                    const savedData = localStorage.getItem('republicaDigital_save');
+                    if (!savedData) {
+                        this.showNotification("Nenhum jogo salvo encontrado!");
+                        return;
+                    }
+
+                    const saveData = JSON.parse(savedData);
+                    this.player = saveData.player;
+                    this.gameState = saveData.gameState;
+                    this.gameHistory = saveData.gameHistory || { actions: [], events: [], decisions: [], performance: {} };
+                    this.aiSystem = saveData.aiSystem || this.aiSystem;
+
+                    this.transitionToState(this.gameState);
+                    this.showNotification("Jogo carregado com sucesso! 📁");
+                } catch(e) {
+                    console.error("Erro ao carregar:", e);
+                    this.showNotification("Erro ao carregar jogo salvo!");
+                }
+            }
+
+            autoSaveInterval() {
+                setInterval(() => {
+                    if (this.gameState !== 'setup') {
+                        this.saveGame();
+                    }
+                }, 30000); // Auto-save a cada 30 segundos
+            }
+
+            // === SISTEMA DE EXPORTAÇÃO PDF ===
+            exportToPDF() {
+                if (typeof window.jsPDF === 'undefined') {
+                    this.showNotification("Erro: Biblioteca PDF não carregada!");
+                    return;
+                }
+
+                const { jsPDF } = window.jsPDF;
+                const doc = new jsPDF();
+                
+                // Configuração de cores e fontes
+                const primaryColor = [44, 62, 80];
+                const accentColor = [52, 152, 219];
+                
+                let yPosition = 20;
+                
+                // CABEÇALHO
+                doc.setFontSize(24);
+                doc.setTextColor(...primaryColor);
+                doc.text('REPÚBLICA DIGITAL', 105, yPosition, { align: 'center' });
+                
+                yPosition += 10;
+                doc.setFontSize(16);
+                doc.setTextColor(...accentColor);
+                doc.text('Relatório de Performance Política', 105, yPosition, { align: 'center' });
+                
+                yPosition += 20;
+                doc.setDrawColor(...primaryColor);
+                doc.line(20, yPosition, 190, yPosition);
+                
+                // INFORMAÇÕES DO JOGADOR
+                yPosition += 15;
+                doc.setFontSize(14);
+                doc.setTextColor(...primaryColor);
+                doc.text('PERFIL DO CANDIDATO', 20, yPosition);
+                
+                yPosition += 10;
+                doc.setFontSize(12);
+                doc.text(`Nome: ${this.player.name}`, 20, yPosition);
+                yPosition += 6;
+                doc.text(`Orientação Política: ${this.player.ideology.charAt(0).toUpperCase() + this.player.ideology.slice(1)}`, 20, yPosition);
+                yPosition += 6;
+                doc.text(`Mandatos Exercidos: ${this.player.term}`, 20, yPosition);
+                yPosition += 6;
+                doc.text(`Tempo de Jogo: ${this.formatPlayTime()}`, 20, yPosition);
+                
+                // ESTATÍSTICAS FINAIS
+                yPosition += 20;
+                doc.setFontSize(14);
+                doc.setTextColor(...primaryColor);
+                doc.text('ESTATÍSTICAS FINAIS', 20, yPosition);
+                
+                yPosition += 10;
+                doc.setFontSize(12);
+                
+                if (this.gameState === 'government' || this.gameHistory.performance.electionScore) {
+                    doc.text(`Score Eleitoral: ${this.gameHistory.performance.electionScore || 'N/A'}%`, 20, yPosition);
+                    yPosition += 6;
+                }
+                
+                const govStats = ['economy', 'social', 'security', 'international', 'environment', 'democracy'];
+                govStats.forEach(stat => {
+                    const value = Math.round(this.player.stats[stat]);
+                    const label = this.getStatName(stat);
+                    doc.text(`${label}: ${value}%`, 20, yPosition);
+                    yPosition += 6;
+                });
+                
+                doc.text(`Aprovação Popular Final: ${Math.round(this.player.stats.popularity)}%`, 20, yPosition);
+                yPosition += 6;
+                doc.text(`Risco de Impeachment: ${Math.round(this.player.stats.impeachmentRisk)}%`, 20, yPosition);
+                
+                // ANÁLISE DE PERFORMANCE
+                yPosition += 15;
+                doc.setFontSize(14);
+                doc.setTextColor(...primaryColor);
+                doc.text('ANÁLISE DE PERFORMANCE', 20, yPosition);
+                
+                yPosition += 10;
+                doc.setFontSize(12);
+                const avgPerf = govStats.reduce((sum, stat) => sum + this.player.stats[stat], 0) / govStats.length;
+                doc.text(`Performance Média Governamental: ${Math.round(avgPerf)}%`, 20, yPosition);
+                
+                yPosition += 6;
+                let legacyText = "Legado Político: ";
+                if (avgPerf >= 80) legacyText += "Presidente Exemplar";
+                else if (avgPerf >= 65) legacyText += "Presidente Muito Bom";
+                else if (avgPerf >= 50) legacyText += "Presidente Competente";
+                else if (avgPerf >= 35) legacyText += "Presidente Regular";
+                else legacyText += "Presidente Problemático";
+                
+                doc.text(legacyText, 20, yPosition);
+                
+                // HISTÓRICO DE AÇÕES
+                if (this.gameHistory.actions.length > 0) {
+                    yPosition += 15;
+                    doc.setFontSize(14);
+                    doc.text('PRINCIPAIS AÇÕES EXECUTADAS', 20, yPosition);
+                    
+                    yPosition += 10;
+                    doc.setFontSize(10);
+                    const recentActions = this.gameHistory.actions.slice(-10);
+                    recentActions.forEach(action => {
+                        if (yPosition > 250) {
+                            doc.addPage();
+                            yPosition = 20;
+                        }
+                        const date = new Date(action.timestamp).toLocaleString('pt-BR');
+                        doc.text(`${date} - ${action.action} (${action.state})`, 20, yPosition);
+                        yPosition += 5;
+                    });
+                }
+                
+                // EVENTOS IMPORTANTES
+                if (this.gameHistory.events.length > 0) {
+                    yPosition += 10;
+                    doc.setFontSize(14);
+                    doc.text('EVENTOS IMPORTANTES', 20, yPosition);
+                    
+                    yPosition += 10;
+                    doc.setFontSize(10);
+                    this.gameHistory.events.forEach(event => {
+                        if (yPosition > 250) {
+                            doc.addPage();
+                            yPosition = 20;
+                        }
+                        const date = new Date(event.timestamp).toLocaleString('pt-BR');
+                        doc.text(`${date} - ${event.event}`, 20, yPosition);
+                        yPosition += 4;
+                        doc.text(`Decisão: ${event.choice}`, 25, yPosition);
+                        yPosition += 8;
+                    });
+                }
+                
+                // RODAPÉ
+                doc.setFontSize(8);
+                doc.setTextColor(128, 128, 128);
+                doc.text('Gerado por República Digital - Simulador Político Avançado', 105, 285, { align: 'center' });
+                doc.text(`Data: ${new Date().toLocaleString('pt-BR')}`, 105, 290, { align: 'center' });
+                
+                // DOWNLOAD
+                const fileName = `RelatorioPresidencial_${this.player.name.replace(/\s+/g, '_')}_${Date.now()}.pdf`;
+                doc.save(fileName);
+                
+                this.showNotification("Relatório PDF exportado com sucesso! 📄");
+            }
+
+            // === FUNÇÕES DE UI E RENDERIZAÇÃO ===
+            showScreen(screenId) {
+                this.dom.screens.forEach(s => s.classList.remove('active'));
+                document.getElementById(screenId).classList.add('active');
+            }
+
+            renderActions(containerId, actions, callback) {
+                const container = document.getElementById(containerId);
+                if (!container) return;
+                
+                container.innerHTML = '';
+                
+                actions.forEach(action => {
+                    const canAfford = this.canAffordAction(action.costs);
+                    const actionDiv = document.createElement('div');
+                    actionDiv.className = `action-card ${!canAfford ? 'disabled' : ''}`;
+                    
+                    if (canAfford) {
+                        actionDiv.addEventListener('click', () => callback(action));
+                    }
+
+                    const costsText = Object.entries(action.costs)
+                        .map(([k, v]) => `${this.getResourceSymbol(k)}${v}`)
+                        .join(' ');
+                    
+                    const effectsHTML = Object.entries(action.effects)
+                        .map(([k, v]) => `<span class="effect ${v > 0 ? 'positive' : 'negative'}">${v > 0 ? '+' : ''}${v} ${this.getStatName(k)}</span>`)
+                        .join('');
+
+                    actionDiv.innerHTML = `
+                        <div class="action-title">
+                            <span>${action.title}</span>
+                            <span class="action-cost">${costsText}</span>
+                        </div>
+                        <div class="action-description">${action.description}</div>
+                        <div class="action-effects">${effectsHTML}</div>
+                    `;
+                    
+                    container.appendChild(actionDiv);
+                });
+            }
+
+            showModal(title, content, choices = []) {
+                this.dom.modalTitle.textContent = title;
+                this.dom.modalBody.innerHTML = content.replace(/\n/g, '<br>');
+                this.dom.modalChoices.innerHTML = '';
+
+                if (choices.length === 0) {
+                    choices.push({ text: "OK", callback: () => {} });
+                }
+
+                choices.forEach(choice => {
+                    const btn = document.createElement('button');
+                    btn.className = 'btn';
+                    btn.textContent = choice.text;
+                    btn.onclick = () => {
+                        this.dom.modal.classList.remove('active');
+                        if (choice.callback) choice.callback();
+                    };
+                    this.dom.modalChoices.appendChild(btn);
+                });
+                
+                this.dom.modal.classList.add('active');
+            }
+
+            showNotification(message) {
+                const notification = document.createElement('div');
+                notification.className = 'notification';
+                notification.textContent = message;
+                document.body.appendChild(notification);
+                
+                setTimeout(() => {
+                    if (notification.parentNode) {
+                        notification.parentNode.removeChild(notification);
+                    }
+                }, 3000);
+            }
+
+            updateUI() {
+                const { stats } = this.player;
+                const safeSet = (id, val) => {
+                    const el = document.getElementById(id);
+                    if (el) el.textContent = val;
+                };
+
+                // Header
+                if (this.dom.termDisplay) {
+                    this.dom.termDisplay.textContent = this.gameState === 'government' ? `${this.player.term}º Mandato` : '';
+                }
+
+                // Campaign stats
+                safeSet('days-left', Math.max(0, stats.days));
+                safeSet('funds', Math.max(0, stats.funds));
+                safeSet('support', Math.max(0, Math.round(stats.support)));
+
+                const campaignStatsEl = document.getElementById('campaign-stats');
+                if (campaignStatsEl) {
+                    campaignStatsEl.innerHTML = `
+                        <div class="stat-item"><div class="stat-value">${Math.round(stats.approval)}</div><div class="stat-label">Aprovação</div></div>
+                        <div class="stat-item"><div class="stat-value">${stats.coalitions}</div><div class="stat-label">Coligações</div></div>
+                        <div class="stat-item"><div class="stat-value">${Math.round(stats.mediaPresence)}</div><div class="stat-label">Mídia</div></div>
+                        <div class="stat-item"><div class="stat-value">${Math.round(stats.debateScore)}</div><div class="stat-label">Debates</div></div>
+                    `;
+                }
+
+                // Government stats
+                safeSet('months-left', Math.max(0, stats.months));
+                
+                const governmentStatsEl = document.getElementById('government-stats');
+                if (governmentStatsEl) {
+                    governmentStatsEl.innerHTML = `
+                        <div class="stat-item"><div class="stat-value">${Math.round(stats.economy)}</div><div class="stat-label">Economia</div></div>
+                        <div class="stat-item"><div class="stat-value">${Math.round(stats.social)}</div><div class="stat-label">Social</div></div>
+                        <div class="stat-item"><div class="stat-value">${Math.round(stats.security)}</div><div class="stat-label">Segurança</div></div>
+                        <div class="stat-item"><div class="stat-value">${Math.round(stats.international)}</div><div class="stat-label">Internacional</div></div>
+                        <div class="stat-item"><div class="stat-value">${Math.round(stats.environment)}</div><div class="stat-label">Ambiente</div></div>
+                        <div class="stat-item"><div class="stat-value">${Math.round(stats.democracy)}</div><div class="stat-label">Democracia</div></div>
+                    `;
+                }
+                
+                // Progress bars
+                safeSet('popularity-percent', `${Math.round(stats.popularity)}%`);
+                const popularityBar = document.getElementById('popularity-bar');
+                if (popularityBar) {
+                    popularityBar.style.width = `${Math.max(0, Math.min(100, stats.popularity))}%`;
+                }
+                
+                safeSet('impeachment-percent', `${Math.round(stats.impeachmentRisk)}%`);
+                const impeachmentBar = document.getElementById('impeachment-bar');
+                if (impeachmentBar) {
+                    impeachmentBar.style.width = `${Math.max(0, Math.min(100, stats.impeachmentRisk))}%`;
+                }
+            }
+
+            // === FUNÇÕES AUXILIARES ===
+            applyCosts(costs) {
+                Object.entries(costs).forEach(([resource, cost]) => {
+                    this.player.stats[resource] = Math.max(0, this.player.stats[resource] - cost);
+                });
+            }
+
+            applyEffects(effects) {
+                Object.entries(effects).forEach(([stat, value]) => {
+                    if (this.player.stats.hasOwnProperty(stat)) {
+                        this.player.stats[stat] = Math.max(0, Math.min(100, this.player.stats[stat] + value));
+                    }
+                });
+            }
+
+            canAffordAction(costs) {
+                return Object.entries(costs).every(([resource, cost]) => 
+                    this.player.stats[resource] >= cost
+                );
+            }
+
+            getResourceSymbol(resource) {
+                const symbols = { funds: '💰', days: '⏰', months: '🗓️' };
+                return symbols[resource] || '';
+            }
+
+            getStatName(stat) {
+                const names = {
+                    support: 'Apoio', approval: 'Aprovação', mediaPresence: 'Mídia',
+                    debateScore: 'Debate', coalitions: 'Coligações', economy: 'Economia',
+                    social: 'Social', security: 'Segurança', international: 'Internacional',
+                    environment: 'Ambiente', democracy: 'Democracia', popularity: 'Popularidade'
+                };
+                return names[stat] || stat;
+            }
+        }
+
+        // Inicialização global
+        let game;
+        document.addEventListener('DOMContentLoaded', () => {
+            game = new RepublicaDigital();
+        });
+    </script>
+</body>
+</html>

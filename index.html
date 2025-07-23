@@ -4,450 +4,16 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>República Digital - Simulador Político</title>
-    <style>
-        /* === RESET E BASE === */
-        * {
-            margin: 0;
-            padding: 0;
-            box-sizing: border-box;
-            -webkit-font-smoothing: antialiased;
-        }
-
-        :root {
-            --primary: #2c3e50;
-            --secondary: #34495e;
-            --accent: #3498db;
-            --success: #27ae60;
-            --warning: #f39c12;
-            --danger: #e74c3c;
-            --text: #ecf0f1;
-            --text-secondary: #bdc3c7;
-            --bg-gradient: linear-gradient(135deg, #0c1426 0%, #1e3c72 100%);
-            --shadow: 0 4px 20px rgba(0,0,0,0.3);
-        }
-
-        html, body {
-            width: 100%;
-            height: 100%;
-            overflow: hidden;
-            font-family: 'SF Pro Display', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
-            background: var(--bg-gradient);
-            color: var(--text);
-        }
-
-        /* === CONTAINERS === */
-        .app {
-            height: 100vh;
-            display: flex;
-            flex-direction: column;
-            overflow: hidden;
-        }
-
-        .header {
-            padding: 15px 20px;
-            background: rgba(0,0,0,0.3);
-            border-bottom: 1px solid rgba(255,255,255,0.1);
-            backdrop-filter: blur(10px);
-            -webkit-backdrop-filter: blur(10px);
-            display: flex;
-            align-items: center;
-            justify-content: space-between;
-            flex-shrink: 0;
-        }
-
-        .title {
-            font-size: 20px;
-            font-weight: 600;
-            color: var(--accent);
-        }
-
-        .subtitle {
-            font-size: 12px;
-            opacity: 0.7;
-            margin-left: 10px;
-        }
-
-        .header-controls {
-            display: flex;
-            gap: 10px;
-            align-items: center;
-        }
-
-        .icon-btn {
-            background: rgba(255,255,255,0.1);
-            border: none;
-            color: var(--text);
-            padding: 8px;
-            border-radius: 6px;
-            cursor: pointer;
-            font-size: 16px;
-            transition: all 0.2s ease;
-        }
-
-        .icon-btn:hover {
-            background: rgba(255,255,255,0.2);
-        }
-
-        .main-content {
-            flex: 1;
-            padding: 20px;
-            overflow-y: auto;
-            -webkit-overflow-scrolling: touch;
-        }
-
-        /* === TELAS === */
-        .screen {
-            display: none;
-            animation: slideIn 0.5s cubic-bezier(0.25, 1, 0.5, 1);
-        }
-
-        .screen.active {
-            display: block;
-        }
-
-        /* === COMPONENTES MINIMALISTAS === */
-        .card {
-            background: rgba(255,255,255,0.05);
-            border: 1px solid rgba(255,255,255,0.1);
-            border-radius: 12px;
-            padding: 20px;
-            margin-bottom: 20px;
-            backdrop-filter: blur(5px);
-        }
-
-        .card h3 {
-            text-align: center;
-            font-weight: 600;
-            margin-bottom: 15px;
-        }
-
-        .input-field {
-            width: 100%;
-            padding: 12px 16px;
-            background: rgba(0,0,0,0.2);
-            border: 1px solid rgba(255,255,255,0.1);
-            border-radius: 8px;
-            color: var(--text);
-            font-size: 16px;
-            margin-bottom: 10px;
-        }
-
-        .input-field:focus {
-            outline: none;
-            border-color: var(--accent);
-            box-shadow: 0 0 0 3px rgba(52,152,219,0.3);
-        }
-
-        .ideology-grid {
-            display: grid;
-            grid-template-columns: repeat(3, 1fr);
-            gap: 10px;
-            margin: 15px 0;
-        }
-
-        .ideology-btn {
-            padding: 15px 10px;
-            background: rgba(255,255,255,0.05);
-            border: 1px solid rgba(255,255,255,0.15);
-            border-radius: 8px;
-            cursor: pointer;
-            transition: all 0.2s ease;
-            text-align: center;
-            font-size: 14px;
-        }
-
-        .ideology-btn:hover {
-            background: rgba(255,255,255,0.1);
-            transform: translateY(-2px);
-        }
-
-        .ideology-btn.selected {
-            background: var(--accent);
-            border-color: var(--accent);
-            color: white;
-            transform: scale(1.05);
-            box-shadow: 0 0 15px rgba(52,152,219,0.4);
-        }
-
-        .btn {
-            background: var(--accent);
-            color: white;
-            border: none;
-            padding: 14px 24px;
-            border-radius: 8px;
-            font-size: 16px;
-            font-weight: 600;
-            cursor: pointer;
-            transition: all 0.2s ease;
-            width: 100%;
-            margin-top: 10px;
-        }
-
-        .btn:hover:not(:disabled) {
-            background: #4aa3df;
-            transform: translateY(-2px);
-            box-shadow: var(--shadow);
-        }
-
-        .btn:disabled {
-            background: var(--secondary);
-            opacity: 0.5;
-            cursor: not-allowed;
-        }
-
-        .btn.secondary {
-            background: var(--secondary);
-            width: auto;
-            padding: 10px 20px;
-            margin: 5px;
-        }
-
-        .btn.danger {
-            background: var(--danger);
-        }
-
-        /* === STATS MINIMALISTAS === */
-        .stats-compact {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(100px, 1fr));
-            gap: 12px;
-            margin: 20px 0;
-        }
-
-        .stat-item {
-            text-align: center;
-            padding: 10px 5px;
-            background: rgba(0,0,0,0.2);
-            border-radius: 6px;
-            border-left: 3px solid var(--accent);
-        }
-
-        .stat-value {
-            font-size: 20px;
-            font-weight: 700;
-            color: var(--accent);
-        }
-
-        .stat-label {
-            font-size: 11px;
-            opacity: 0.7;
-            margin-top: 3px;
-        }
-
-        /* === SISTEMA DE RECURSOS/AÇÕES === */
-        .resources-bar {
-            display: flex;
-            justify-content: space-around;
-            padding: 15px;
-            background: rgba(0,0,0,0.3);
-            border-radius: 8px;
-            margin-bottom: 20px;
-            font-size: 14px;
-        }
-
-        .resource { 
-            display: flex; 
-            align-items: center; 
-            gap: 8px; 
-        }
-
-        .actions-list {
-            display: flex;
-            flex-direction: column;
-            gap: 10px;
-        }
-
-        .action-card {
-            background: rgba(255,255,255,0.05);
-            border: 1px solid rgba(255,255,255,0.1);
-            border-radius: 8px;
-            padding: 15px;
-            cursor: pointer;
-            transition: all 0.2s ease;
-            position: relative;
-        }
-
-        .action-card:hover:not(.disabled) {
-            background: rgba(255,255,255,0.08);
-            border-color: rgba(255,255,255,0.3);
-        }
-
-        .action-card.disabled {
-            opacity: 0.4;
-            cursor: not-allowed;
-            background: transparent;
-        }
-
-        .action-title {
-            font-size: 15px;
-            font-weight: 600;
-            margin-bottom: 8px;
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-        }
-
-        .action-cost {
-            font-size: 12px;
-            color: var(--warning);
-            background: rgba(243,156,18,0.2);
-            padding: 3px 10px;
-            border-radius: 12px;
-        }
-
-        .action-description {
-            font-size: 13px;
-            opacity: 0.8;
-            margin-bottom: 10px;
-            line-height: 1.4;
-        }
-
-        .action-effects {
-            display: flex;
-            flex-wrap: wrap;
-            gap: 8px;
-            font-size: 11px;
-        }
-
-        .effect { 
-            padding: 2px 8px; 
-            border-radius: 10px; 
-            background: rgba(255,255,255,0.1); 
-        }
-        .effect.positive { color: var(--success); }
-        .effect.negative { color: var(--danger); }
-
-        /* === MODAL === */
-        .modal {
-            position: fixed;
-            top: 0; left: 0;
-            width: 100%; height: 100%;
-            background: rgba(0,0,0,0.85);
-            backdrop-filter: blur(5px);
-            display: none;
-            justify-content: center;
-            align-items: center;
-            z-index: 1000;
-            animation: fadeIn 0.3s ease;
-        }
-
-        .modal.active { display: flex; }
-
-        .modal-content {
-            background: var(--primary);
-            border-radius: 12px;
-            padding: 25px;
-            width: 90%;
-            max-width: 400px;
-            max-height: 80vh;
-            overflow-y: auto;
-            box-shadow: var(--shadow);
-            animation: scaleUp 0.3s cubic-bezier(0.165, 0.84, 0.44, 1);
-        }
-
-        .modal-title { 
-            font-size: 20px; 
-            font-weight: 600; 
-            margin-bottom: 15px; 
-            text-align: center; 
-        }
-        .modal-text { 
-            font-size: 14px; 
-            line-height: 1.6; 
-            margin-bottom: 20px; 
-            opacity: 0.9; 
-        }
-        #modal-choices { 
-            display: flex; 
-            flex-direction: column; 
-            gap: 10px; 
-        }
-
-        .philosophy-quote {
-            font-style: italic;
-            background: rgba(0,0,0,0.2);
-            padding: 15px;
-            border-left: 3px solid var(--accent);
-            margin: 20px 0;
-            font-size: 13px;
-            line-height: 1.5;
-            border-radius: 4px;
-        }
-
-        /* === PROGRESS BARS === */
-        .progress-container { margin: 20px 0; }
-        .progress-label { 
-            display: flex; 
-            justify-content: space-between; 
-            font-size: 12px; 
-            margin-bottom: 8px; 
-        }
-        .progress-bar { 
-            height: 8px; 
-            background: rgba(0,0,0,0.3); 
-            border-radius: 4px; 
-            overflow: hidden; 
-        }
-        .progress-fill { 
-            height: 100%; 
-            transition: width 0.4s ease; 
-            border-radius: 4px; 
-        }
-        #popularity-bar { 
-            background: linear-gradient(90deg, var(--accent), #8e44ad); 
-        }
-        #impeachment-bar { 
-            background: linear-gradient(90deg, var(--success), var(--warning), var(--danger)); 
-        }
-
-        /* === NOTIFICAÇÕES === */
-        .notification {
-            position: fixed;
-            top: 20px;
-            right: 20px;
-            background: var(--danger);
-            color: white;
-            padding: 12px 20px;
-            border-radius: 8px;
-            box-shadow: var(--shadow);
-            z-index: 1001;
-            animation: slideInRight 0.3s ease;
-        }
-
-        /* === BOTÃO SKIP TIME === */
-        .skip-time-btn {
-            position: fixed;
-            bottom: 20px;
-            right: 20px;
-            background: var(--warning);
-            color: white;
-            border: none;
-            padding: 12px 20px;
-            border-radius: 25px;
-            cursor: pointer;
-            font-weight: 600;
-            z-index: 999;
-            box-shadow: var(--shadow);
-            animation: pulse 2s infinite;
-        }
-
-        /* === RESPONSIVE & ANIMATIONS === */
-        @media (max-width: 480px) {
-            .ideology-grid { grid-template-columns: 1fr; }
-            .stats-compact { grid-template-columns: repeat(2, 1fr); }
-            .main-content { padding: 15px; }
-            .header-controls { display: none; }
-        }
-
-        @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
-        @keyframes scaleUp { from { transform: scale(0.9); opacity: 0; } to { transform: scale(1); opacity: 1; } }
-        @keyframes slideIn { from { transform: translateY(20px); opacity: 0; } to { transform: translateY(0); opacity: 1; } }
-        @keyframes slideInRight { from { transform: translateX(100%); } to { transform: translateX(0); } }
-        @keyframes pulse { 0%, 100% { opacity: 1; } 50% { opacity: 0.7; } }
-    </style>
+    
+    <!-- Biblioteca jsPDF para geração de PDFs -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+    
+    <!-- CSS principal do jogo -->
+    <link rel="stylesheet" href="style.css">
 </head>
 <body>
     <div class="app">
+        <!-- Header do jogo -->
         <div class="header">
             <div>
                 <span class="title">📊 República Digital</span>
@@ -461,8 +27,9 @@
             </div>
         </div>
 
+        <!-- Conteúdo principal -->
         <div class="main-content">
-            <!-- TELA DE CRIAÇÃO -->
+            <!-- TELA DE CRIAÇÃO DE CANDIDATO -->
             <div id="setup" class="screen active">
                 <div class="card">
                     <h3>Configuração do Candidato</h3>
@@ -496,13 +63,13 @@
                 </div>
             </div>
 
-            <!-- TELA DE CAMPANHA -->
+            <!-- TELA DE CAMPANHA ELEITORAL -->
             <div id="campaign" class="screen">
                 <div class="resources-bar">
                     <div class="resource">⏰ <span id="days-left">90</span> dias</div>
-                    <div class="resource">💰 R$<span id="funds">50</span>M</div>
+                    <div class="resource">💰 R$<span id="funds">40</span>M</div>
                     <div class="resource">🤝 <span id="support">0</span>% Apoio</div>
-                    <div class="resource">📊 <span id="polls">45</span>% Pesquisas</div>
+                    <div class="resource">📊 <span id="polls">35</span>% Pesquisas</div>
                 </div>
                 <div class="stats-compact" id="campaign-stats"></div>
                 <div class="actions-list" id="campaign-actions"></div>
@@ -515,32 +82,115 @@
                     <div class="resource">🗓️ <span id="months-left">48</span> meses</div>
                     <div class="resource">💰 PIB: <span id="gdp">100</span></div>
                     <div class="resource">👥 Pop: <span id="population">215M</span></div>
+                    <div class="resource">⚖️ Cong: <span id="congress-approval">50</span>%</div>
                 </div>
                 <div class="stats-compact" id="government-stats"></div>
+                
+                <!-- Barras de progresso principais -->
                 <div class="progress-container">
                     <div class="progress-label">
                         <span>Aprovação Popular</span>
-                        <span id="popularity-percent">60%</span>
+                        <span id="popularity-percent">50%</span>
                     </div>
                     <div class="progress-bar">
-                        <div class="progress-fill" id="popularity-bar" style="width: 60%"></div>
+                        <div class="progress-fill" id="popularity-bar" style="width: 50%"></div>
                     </div>
                 </div>
+                
                 <div class="progress-container">
                     <div class="progress-label">
                         <span>Risco de Impeachment</span>
-                        <span id="impeachment-percent">15%</span>
+                        <span id="impeachment-percent">20%</span>
                     </div>
                     <div class="progress-bar">
-                        <div class="progress-fill" id="impeachment-bar" style="width: 15%"></div>
+                        <div class="progress-fill" id="impeachment-bar" style="width: 20%"></div>
                     </div>
                 </div>
+                
+                <!-- Barras de progresso secundárias -->
+                <div class="secondary-metrics">
+                    <div class="metric-row">
+                        <span>Relação com Mídia:</span>
+                        <div class="mini-progress-bar">
+                            <div class="mini-progress-fill" id="media-relation-bar" style="width: 50%"></div>
+                        </div>
+                        <span id="media-relation-percent">50%</span>
+                    </div>
+                    
+                    <div class="metric-row">
+                        <span>Estabilidade Econômica:</span>
+                        <div class="mini-progress-bar">
+                            <div class="mini-progress-fill" id="economic-stability-bar" style="width: 60%"></div>
+                        </div>
+                        <span id="economic-stability-percent">60%</span>
+                    </div>
+                    
+                    <div class="metric-row">
+                        <span>Coesão Social:</span>
+                        <div class="mini-progress-bar">
+                            <div class="mini-progress-fill" id="social-cohesion-bar" style="width: 45%"></div>
+                        </div>
+                        <span id="social-cohesion-percent">45%</span>
+                    </div>
+                </div>
+                
                 <div class="actions-list" id="government-actions"></div>
                 <button id="skip-government" class="skip-time-btn" style="display: none;">Pular para Fim do Mandato ⏭️</button>
             </div>
+
+            <!-- TELA DE ANÁLISE DE DADOS -->
+            <div id="analytics" class="screen">
+                <div class="card">
+                    <h3>📊 Centro de Análise Política</h3>
+                    <div id="analytics-content">
+                        <!-- Conteúdo será preenchido dinamicamente -->
+                    </div>
+                </div>
+            </div>
+
+            <!-- TELA DE CONFIGURAÇÕES -->
+            <div id="settings" class="screen">
+                <div class="card">
+                    <h3>⚙️ Configurações do Jogo</h3>
+                    <div class="settings-content">
+                        <div class="setting-item">
+                            <label for="difficulty-select">Nível de Dificuldade:</label>
+                            <select id="difficulty-select" class="input-field">
+                                <option value="easy">Fácil - Tutorial Político</option>
+                                <option value="normal" selected>Normal - Realismo Balanceado</option>
+                                <option value="hard">Difícil - Desafio Político</option>
+                                <option value="expert">Expert - Simulação Realista</option>
+                            </select>
+                        </div>
+                        
+                        <div class="setting-item">
+                            <label for="autosave-toggle">Salvamento Automático:</label>
+                            <input type="checkbox" id="autosave-toggle" checked>
+                        </div>
+                        
+                        <div class="setting-item">
+                            <label for="notifications-toggle">Notificações de Sistema:</label>
+                            <input type="checkbox" id="notifications-toggle" checked>
+                        </div>
+                        
+                        <div class="setting-item">
+                            <label for="speed-multiplier">Velocidade do Tempo:</label>
+                            <select id="speed-multiplier" class="input-field">
+                                <option value="0.5">Muito Lento (2x mais tempo)</option>
+                                <option value="1" selected>Normal</option>
+                                <option value="1.5">Rápido (1.5x mais rápido)</option>
+                                <option value="2">Muito Rápido (2x mais rápido)</option>
+                            </select>
+                        </div>
+                        
+                        <button class="btn" onclick="game && game.applySettings()">Aplicar Configurações</button>
+                        <button class="btn secondary" onclick="game && game.resetToDefaults()">Restaurar Padrões</button>
+                    </div>
+                </div>
+            </div>
         </div>
 
-        <!-- MODAL -->
+        <!-- MODAL PRINCIPAL -->
         <div id="modal" class="modal">
             <div class="modal-content">
                 <h3 id="modal-title" class="modal-title"></h3>
@@ -548,1261 +198,43 @@
                 <div id="modal-choices"></div>
             </div>
         </div>
+
+        <!-- MODAL DE NOTÍCIAS -->
+        <div id="news-modal" class="modal">
+            <div class="modal-content news-modal-content">
+                <h3 id="news-title" class="modal-title">📰 Última Hora</h3>
+                <div id="news-body" class="modal-text"></div>
+                <div class="news-source" id="news-source"></div>
+                <div id="news-choices"></div>
+            </div>
+        </div>
+
+        <!-- PAINEL DE ESTATÍSTICAS AVANÇADAS -->
+        <div id="stats-panel" class="stats-panel" style="display: none;">
+            <div class="stats-panel-header">
+                <h4>📈 Estatísticas Detalhadas</h4>
+                <button class="close-btn" onclick="game && game.closeStatsPanel()">✕</button>
+            </div>
+            <div class="stats-panel-content" id="stats-panel-content">
+                <!-- Conteúdo preenchido dinamicamente -->
+            </div>
+        </div>
+
+        <!-- INDICADOR DE NOTIFICAÇÕES -->
+        <div id="notification-center" class="notification-center">
+            <!-- Notificações aparecem aqui -->
+        </div>
+
+        <!-- BARRA DE NAVEGAÇÃO INFERIOR (MOBILE) -->
+        <div class="bottom-nav" id="bottom-nav">
+            <button class="nav-btn" onclick="game && game.showAnalytics()">📊</button>
+            <button class="nav-btn" onclick="game && game.showStatsPanel()">📈</button>
+            <button class="nav-btn" onclick="game && game.showSettings()">⚙️</button>
+            <button class="nav-btn" onclick="game && game.exportToPDF()">📄</button>
+        </div>
     </div>
 
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
-    <script>
-        class RepublicaDigital {
-            constructor() {
-                this.aiSystem = {
-                    adaptiveDifficulty: 1.2,
-                    playerBehaviorPattern: { aggressive: 0, conservative: 0, populist: 0, progressive: 0 },
-                    economicCycle: 'stable',
-                    politicalCrisis: 0,
-                    internationalTensions: 0
-                };
-                
-                this.realPolitics = {
-                    congressApproval: 45,
-                    mediaHostility: 30,
-                    economicPressure: 25,
-                    militaryLoyalty: 80,
-                    internationalStanding: 60
-                };
-
-                this.gameHistory = {
-                    actions: [],
-                    events: [],
-                    decisions: [],
-                    performance: {},
-                    crises: []
-                };
-
-                this.philosophyTexts = this.initPhilosophyTexts();
-                this.init();
-            }
-
-            init() {
-                Object.values(this.timers || {}).forEach(timer => clearInterval(timer));
-                
-                this.player = this.getInitialPlayerState();
-                this.gameState = 'setup';
-                this.timers = { campaign: null, government: null };
-                
-                this.setupEventListeners();
-                this.resetUI();
-                this.updateUI();
-                this.showScreen('setup');
-                this.startAutoSave();
-            }
-
-            getInitialPlayerState() {
-                return {
-                    name: '', 
-                    ideology: '', 
-                    term: 1, 
-                    maxTerms: 2,
-                    startTime: Date.now(),
-                    stats: {
-                        days: 90, funds: 35, support: 0, approval: 25,
-                        coalitions: 1, mediaPresence: 15, debateScore: 0, polls: 25,
-                        months: 48, 
-                        economy: 45, social: 40, security: 55, 
-                        international: 40, environment: 35, democracy: 70,
-                        popularity: 45, impeachmentRisk: 25, gdp: 100, population: 215
-                    }
-                };
-            }
-
-            initPhilosophyTexts() {
-                return {
-                    esquerda: "Analisou as contradições do sistema capitalista e propôs a luta de classes como motor da história.",
-                    centro: "Desenvolveu o conceito de véu da ignorância para fundamentar uma sociedade justa.",
-                    direita: "Estabeleceu os fundamentos do liberalismo econômico, defendendo a mão invisível do mercado."
-                };
-            }
-
-            updateAI() {
-                const recentActions = this.gameHistory.actions.slice(-8);
-                this.aiSystem.playerBehaviorPattern = {
-                    aggressive: recentActions.filter(a => a.type === 'aggressive').length,
-                    conservative: recentActions.filter(a => a.type === 'conservative').length,
-                    populist: recentActions.filter(a => a.type === 'populist').length,
-                    progressive: recentActions.filter(a => a.type === 'progressive').length
-                };
-
-                if (Math.random() < 0.1) {
-                    const cycles = ['recession', 'stable', 'growth'];
-                    this.aiSystem.economicCycle = cycles[Math.floor(Math.random() * cycles.length)];
-                }
-
-                this.realPolitics.congressApproval += Math.random() * 10 - 5;
-                this.realPolitics.mediaHostility += Math.random() * 8 - 4;
-                this.realPolitics.economicPressure += Math.random() * 6 - 3;
-
-                this.realPolitics.congressApproval = Math.max(0, Math.min(100, this.realPolitics.congressApproval));
-                this.realPolitics.mediaHostility = Math.max(0, Math.min(100, this.realPolitics.mediaHostility));
-                this.realPolitics.economicPressure = Math.max(0, Math.min(100, this.realPolitics.economicPressure));
-            }
-
-            generateIntelligentCrisis() {
-                const crises = [
-                    {
-                        title: "Escândalo de Corrupção no Governo",
-                        description: "Operação da Polícia Federal descobriu esquema de corrupção envolvendo ministros.",
-                        difficulty: 'hard',
-                        choices: [
-                            { 
-                                text: "Demitir todos os envolvidos", 
-                                effects: { democracy: 10, popularity: -8 }
-                            },
-                            { 
-                                text: "Defender ministros e atacar investigação", 
-                                effects: { democracy: -20, popularity: -15 }
-                            },
-                            { 
-                                text: "Criar comissão de investigação interna", 
-                                effects: { democracy: -5, popularity: -5 }
-                            }
-                        ]
-                    },
-                    {
-                        title: "Crise Econômica Internacional",
-                        description: "Recessão mundial afeta Brasil. FMI oferece ajuda com condicionalidades.",
-                        difficulty: 'extreme',
-                        choices: [
-                            { 
-                                text: "Aceitar acordo com FMI", 
-                                effects: { economy: 15, social: -20, popularity: -25 }
-                            },
-                            { 
-                                text: "Estimular economia com gastos públicos", 
-                                effects: { economy: -5, social: 15, popularity: 10 }
-                            },
-                            { 
-                                text: "Implementar austeridade severa", 
-                                effects: { economy: 10, social: -25, popularity: -30 }
-                            }
-                        ]
-                    },
-                    {
-                        title: "Tensão Militar nas Fronteiras",
-                        description: "País vizinho mobiliza tropas na fronteira por disputa territorial.",
-                        difficulty: 'extreme',
-                        choices: [
-                            { 
-                                text: "Mobilizar tropas para dissuasão", 
-                                effects: { security: 20, international: -15, economy: -10 }
-                            },
-                            { 
-                                text: "Buscar mediação internacional", 
-                                effects: { international: 10, security: -5, popularity: -8 }
-                            },
-                            { 
-                                text: "Fazer concessões territoriais", 
-                                effects: { international: 5, security: -20, popularity: -25 }
-                            }
-                        ]
-                    }
-                ];
-
-                return crises[Math.floor(Math.random() * crises.length)];
-            }
-
-            setupEventListeners() {
-                const nameInput = document.getElementById('candidate-name');
-                const startBtn = document.getElementById('start-game');
-                const ideologyBtns = document.querySelectorAll('.ideology-btn');
-
-                if (nameInput) {
-                    nameInput.addEventListener('input', (e) => {
-                        this.player.name = e.target.value.trim();
-                        this.checkSetupComplete();
-                    });
-                }
-
-                if (startBtn) {
-                    startBtn.addEventListener('click', () => this.startCampaign());
-                }
-
-                ideologyBtns.forEach(btn => {
-                    btn.addEventListener('click', () => {
-                        ideologyBtns.forEach(b => b.classList.remove('selected'));
-                        btn.classList.add('selected');
-                        this.player.ideology = btn.dataset.ideology;
-                        this.showPhilosophyPreview();
-                        this.checkSetupComplete();
-                    });
-                });
-            }
-
-            checkSetupComplete() {
-                const startBtn = document.getElementById('start-game');
-                if (startBtn) {
-                    startBtn.disabled = !this.player.name || !this.player.ideology;
-                }
-            }
-
-            showPhilosophyPreview() {
-                const preview = document.getElementById('philosophy-preview');
-                if (preview && this.philosophyTexts[this.player.ideology]) {
-                    preview.textContent = this.philosophyTexts[this.player.ideology];
-                    preview.style.display = 'block';
-                }
-            }
-
-            resetUI() {
-                const nameInput = document.getElementById('candidate-name');
-                const ideologyBtns = document.querySelectorAll('.ideology-btn');
-                const preview = document.getElementById('philosophy-preview');
-                const startBtn = document.getElementById('start-game');
-
-                if (nameInput) nameInput.value = '';
-                ideologyBtns.forEach(b => b.classList.remove('selected'));
-                if (preview) preview.style.display = 'none';
-                if (startBtn) startBtn.disabled = true;
-            }
-
-            startCampaign() {
-                this.gameState = 'campaign';
-                this.showScreen('campaign');
-                this.setupCampaignActions();
-                this.startCampaignTimer();
-                this.updateUI();
-            }
-
-            setupCampaignActions() {
-                const economicModifier = this.aiSystem.economicCycle === 'recession' ? 1.5 : 
-                                       this.aiSystem.economicCycle === 'growth' ? 0.8 : 1.0;
-                
-                const actions = [
-                    { 
-                        id: 'social_media', 
-                        title: '📱 Estratégia Digital Massiva', 
-                        description: 'Campanha coordenada em redes sociais com influenciadores.',
-                        costs: { funds: Math.round(12 * economicModifier), days: 4 }, 
-                        effects: { support: 15, mediaPresence: 20, approval: 5, polls: 8 },
-                        type: 'populist'
-                    },
-                    { 
-                        id: 'traditional_coalitions', 
-                        title: '🤝 Grande Coligação Nacional',
-                        description: 'Articulação com múltiplos partidos, governadores e empresários.',
-                        costs: { funds: Math.round(25 * economicModifier), days: 10 }, 
-                        effects: { coalitions: 5, support: 25, approval: 10, polls: 12 },
-                        type: 'conservative'
-                    },
-                    { 
-                        id: 'ground_warfare', 
-                        title: '🚶 Guerra de Trincheiras',
-                        description: 'Mobilização porta a porta com sindicatos e movimentos sociais.',
-                        costs: { funds: Math.round(8 * economicModifier), days: 12 }, 
-                        effects: { support: 35, coalitions: 2, approval: 18, polls: 15 },
-                        type: 'populist'
-                    },
-                    { 
-                        id: 'media_blitz', 
-                        title: '📺 Ofensiva Midiática Total',
-                        description: 'Saturação em TV, rádio, jornais e propaganda massiva.',
-                        costs: { funds: Math.round(30 * economicModifier), days: 6 }, 
-                        effects: { approval: 28, mediaPresence: 35, polls: 20, support: 10 },
-                        type: 'conservative'
-                    },
-                    { 
-                        id: 'debate_mastery', 
-                        title: '🎙️ Mestria nos Debates',
-                        description: 'Preparação intensiva com especialistas em retórica.',
-                        costs: { funds: Math.round(15 * economicModifier), days: 8 }, 
-                        effects: { debateScore: 40, approval: 20, mediaPresence: 15, polls: 18 },
-                        type: 'conservative'
-                    },
-                    { 
-                        id: 'negative_campaign', 
-                        title: '⚔️ Guerra Suja',
-                        description: 'Investigação opositiva e ataques coordenados aos adversários.',
-                        costs: { funds: Math.round(20 * economicModifier), days: 5 }, 
-                        effects: { support: 20, approval: -8, mediaPresence: 25, polls: 15 },
-                        type: 'aggressive'
-                    },
-                    { 
-                        id: 'populist_rally', 
-                        title: '🔥 Mobilização Populista',
-                        description: 'Grandes comícios apelando ao povo contra as elites.',
-                        costs: { funds: Math.round(10 * economicModifier), days: 7 }, 
-                        effects: { support: 30, approval: 15, polls: 12, coalitions: -1 },
-                        type: 'populist'
-                    },
-                    { 
-                        id: 'economic_plan', 
-                        title: '📊 Plano Econômico Detalhado',
-                        description: 'Proposta técnica rigorosa com economistas renomados.',
-                        costs: { funds: Math.round(18 * economicModifier), days: 9 }, 
-                        effects: { approval: 25, polls: 22, support: 8, coalitions: 1 },
-                        type: 'conservative'
-                    }
-                ];
-
-                this.renderActions('campaign-actions', actions, this.executeCampaignAction.bind(this));
-            }
-
-            executeCampaignAction(action) {
-                if (!this.canAffordAction(action.costs)) {
-                    this.showNotification("❌ Recursos insuficientes para esta ação!");
-                    return;
-                }
-
-                this.applyCosts(action.costs);
-                this.applyEffects(action.effects);
-                
-                this.gameHistory.actions.push({
-                    type: action.type,
-                    timestamp: Date.now(),
-                    action: action.id,
-                    state: 'campaign',
-                    description: action.title
-                });
-
-                this.updateAI();
-                this.updateUI();
-                this.setupCampaignActions();
-                
-                if (Math.random() < 0.4) {
-                    this.triggerCampaignCrisis();
-                }
-
-                this.checkSkipAvailability();
-            }
-
-            startCampaignTimer() {
-                this.timers.campaign = setInterval(() => {
-                    if (this.gameState !== 'campaign') {
-                        clearInterval(this.timers.campaign);
-                        return;
-                    }
-                    
-                    this.player.stats.days--;
-                    
-                    this.player.stats.polls += Math.random() * 4 - 2;
-                    this.player.stats.polls = Math.max(0, Math.min(100, this.player.stats.polls));
-                    
-                    if (this.player.stats.days <= 0) {
-                        this.endCampaign();
-                    }
-                    
-                    this.updateUI();
-                    this.checkSkipAvailability();
-                }, 1500);
-            }
-
-            checkSkipAvailability() {
-                const skipBtn = document.getElementById('skip-campaign');
-                if (skipBtn) {
-                    const canSkip = (this.player.stats.funds <= 5 && this.player.stats.days > 0) || 
-                                   this.player.stats.days <= 10;
-                    skipBtn.style.display = canSkip ? 'block' : 'none';
-                    skipBtn.onclick = () => this.skipToElection();
-                }
-            }
-
-            skipToElection() {
-                clearInterval(this.timers.campaign);
-                this.player.stats.days = 0;
-                this.endCampaign();
-            }
-
-            triggerCampaignCrisis() {
-                const crises = [
-                    {
-                        title: "Vazamento de Áudios Comprometedores",
-                        description: "Áudios seus criticando eleitores vazam na mídia.",
-                        choices: [
-                            { text: "Pedir desculpas públicas", effects: { approval: -5, polls: -3 } },
-                            { text: "Atacar vazamento como crime", effects: { approval: -8, support: 5 } },
-                            { text: "Ignorar completamente", effects: { approval: -12, polls: -8 } }
-                        ]
-                    },
-                    {
-                        title: "Aliado Importante É Preso",
-                        description: "Seu principal financiador é preso por corrupção.",
-                        choices: [
-                            { text: "Romper imediatamente", effects: { funds: -15, approval: 3, coalitions: -1 } },
-                            { text: "Defender até o fim", effects: { approval: -15, support: 8 } },
-                            { text: "Manter distância cautelosa", effects: { approval: -8, funds: -8 } }
-                        ]
-                    },
-                    {
-                        title: "Ataque Terrorista Nacional",
-                        description: "Atentado terrorista abala o país.",
-                        choices: [
-                            { text: "Propor estado de emergência", effects: { support: 15, approval: 10, polls: 12 } },
-                            { text: "Criticar governo atual", effects: { support: 8, approval: -3 } },
-                            { text: "Pedir união nacional", effects: { approval: 5, coalitions: 1 } }
-                        ]
-                    }
-                ];
-
-                const crisis = crises[Math.floor(Math.random() * crises.length)];
-                this.showCrisisModal(crisis);
-            }
-
-            endCampaign() {
-                clearInterval(this.timers.campaign);
-                
-                const baseScore = (this.player.stats.support * 0.35) + 
-                                (this.player.stats.approval * 0.25) + 
-                                (this.player.stats.debateScore * 0.15) + 
-                                (this.player.stats.mediaPresence * 0.10) + 
-                                (this.player.stats.polls * 0.15);
-                
-                const economicModifier = this.aiSystem.economicCycle === 'recession' ? -8 : 
-                                       this.aiSystem.economicCycle === 'growth' ? 5 : 0;
-                
-                const finalScore = Math.max(0, Math.round(baseScore + economicModifier));
-                this.gameHistory.performance.electionScore = finalScore;
-                
-                if (finalScore >= 65) {
-                    this.showModal(
-                        "🎉 VITÓRIA ELEITORAL HISTÓRICA!", 
-                        `Parabéns, Presidente ${this.player.name}! Com ${finalScore}% dos votos válidos, você conquistou uma vitória expressiva.`, 
-                        [{ text: "Assumir a Presidência", callback: () => this.startGovernment() }]
-                    );
-                } else {
-                    this.gameHistory.performance.gameEnded = 'electoral_defeat';
-                    this.showModal(
-                        "❌ DERROTA ELEITORAL", 
-                        `Você obteve ${finalScore}% dos votos válidos, insuficiente para a vitória.`, 
-                        [
-                            { text: "Exportar Relatório da Campanha", callback: () => this.exportToPDF() },
-                            { text: "Tentar Nova Campanha", callback: () => this.init() }
-                        ]
-                    );
-                }
-            }
-
-            startGovernment() {
-                this.gameState = 'government';
-                this.showScreen('government');
-                this.setupGovernmentActions();
-                this.startGovernmentTimer();
-                this.updateUI();
-
-                const campaignImpact = this.player.stats.approval / 10;
-                this.realPolitics.congressApproval += campaignImpact;
-                this.realPolitics.mediaHostility -= campaignImpact / 2;
-            }
-
-            setupGovernmentActions() {
-                const congressFactor = this.realPolitics.congressApproval / 100;
-                
-                const actions = [
-                    { 
-                        id: 'tax_reform', 
-                        title: '💰 Reforma Tributária Estrutural',
-                        description: 'Reformulação completa do sistema tributário brasileiro.',
-                        costs: { months: Math.round(12 / congressFactor) }, 
-                        effects: { 
-                            economy: 20, 
-                            social: -8, 
-                            democracy: -5,
-                            popularity: -10 
-                        },
-                        type: 'conservative',
-                        difficulty: 'extreme'
-                    },
-                    { 
-                        id: 'universal_income', 
-                        title: '👥 Renda Básica Universal',
-                        description: 'Programa revolucionário de renda mínima para todos os brasileiros.',
-                        costs: { months: Math.round(10 / congressFactor) }, 
-                        effects: { 
-                            social: 35, 
-                            economy: -15, 
-                            democracy: 8,
-                            popularity: 20,
-                            gdp: -5
-                        },
-                        type: 'progressive',
-                        difficulty: 'extreme'
-                    },
-                    { 
-                        id: 'anti_crime_operation', 
-                        title: '🚔 Operação Nacional Anti-Crime',
-                        description: 'Mega operação das forças federais contra organizações criminosas.',
-                        costs: { months: 6 }, 
-                        effects: { 
-                            security: 25, 
-                            democracy: -12, 
-                            social: -8,
-                            popularity: 15
-                        },
-                        type: 'aggressive',
-                        difficulty: 'hard'
-                    },
-                    { 
-                        id: 'amazon_protection', 
-                        title: '🌱 Operação Amazônia Verde',
-                        description: 'Programa massivo de proteção ambiental com militarização da Amazônia.',
-                        costs: { months: 8 }, 
-                        effects: { 
-                            environment: 40, 
-                            economy: -20, 
-                            international: 25,
-                            popularity: -15,
-                            gdp: -8
-                        },
-                        type: 'progressive',
-                        difficulty: 'extreme'
-                    },
-                    { 
-                        id: 'diplomatic_offensive', 
-                        title: '🌍 Nova Política Externa',
-                        description: 'Reposicionamento geopolítico do Brasil.',
-                        costs: { months: 5 }, 
-                        effects: { 
-                            international: 30, 
-                            economy: 8, 
-                            security: -5,
-                            democracy: 3
-                        },
-                        type: 'conservative',
-                        difficulty: 'hard'
-                    },
-                    { 
-                        id: 'constitutional_crisis', 
-                        title: '📜 Reforma Constitucional de Emergência',
-                        description: 'Proposta para ampliar poderes presidenciais.',
-                        costs: { months: 15 }, 
-                        effects: { 
-                            democracy: -25, 
-                            economy: 15,
-                            security: 10,
-                            popularity: -20
-                        },
-                        type: 'aggressive',
-                        difficulty: 'extreme'
-                    },
-                    { 
-                        id: 'infrastructure_megaproject', 
-                        title: '🏗️ Novo PAC Infraestrutura',
-                        description: 'Programa trilionário de infraestrutura.',
-                        costs: { months: 18 }, 
-                        effects: { 
-                            economy: 25, 
-                            social: 15, 
-                            environment: -12,
-                            popularity: 18,
-                            gdp: 12
-                        },
-                        type: 'populist',
-                        difficulty: 'hard'
-                    },
-                    { 
-                        id: 'education_revolution', 
-                        title: '🎓 Revolução Educacional',
-                        description: 'Transformação radical do ensino público.',
-                        costs: { months: 12 }, 
-                        effects: { 
-                            social: 30, 
-                            economy: 10, 
-                            democracy: 12,
-                            popularity: 12,
-                            gdp: 5
-                        },
-                        type: 'progressive',
-                        difficulty: 'hard'
-                    }
-                ];
-
-                this.renderActions('government-actions', actions, this.executeGovernmentAction.bind(this));
-            }
-
-            executeGovernmentAction(action) {
-                if (!this.canAffordAction(action.costs)) {
-                    this.showNotification("❌ Tempo insuficiente para implementar esta política!");
-                    return;
-                }
-
-                this.applyCosts(action.costs);
-                this.applyEffects(action.effects);
-                
-                this.gameHistory.actions.push({
-                    type: action.type,
-                    timestamp: Date.now(),
-                    action: action.id,
-                    state: 'government',
-                    description: action.title,
-                    difficulty: action.difficulty
-                });
-
-                this.realPolitics.congressApproval += Math.random() * 10 - 5;
-                this.realPolitics.mediaHostility += Math.random() * 8 - 4;
-
-                this.calculateGovernmentMetrics();
-                this.updateAI();
-                this.updateUI();
-                this.setupGovernmentActions();
-                
-                if (Math.random() < 0.35) {
-                    this.triggerGovernmentCrisis();
-                }
-
-                this.checkGovernmentSkip();
-            }
-
-            checkGovernmentSkip() {
-                const skipBtn = document.getElementById('skip-government');
-                if (skipBtn) {
-                    const canSkip = this.player.stats.months <= 6;
-                    skipBtn.style.display = canSkip ? 'block' : 'none';
-                    skipBtn.onclick = () => this.skipToEndTerm();
-                }
-            }
-
-            skipToEndTerm() {
-                clearInterval(this.timers.government);
-                this.player.stats.months = 0;
-                this.endTerm();
-            }
-
-            startGovernmentTimer() {
-                this.timers.government = setInterval(() => {
-                    if (this.gameState !== 'government') {
-                        clearInterval(this.timers.government);
-                        return;
-                    }
-                    
-                    this.player.stats.months--;
-                    
-                    const degradationFactor = this.aiSystem.adaptiveDifficulty;
-                    const economicCycleFactor = this.aiSystem.economicCycle === 'recession' ? 1.5 : 
-                                               this.aiSystem.economicCycle === 'growth' ? 0.7 : 1.0;
-                    
-                    ['economy', 'social', 'security', 'international', 'environment'].forEach(stat => {
-                        const decay = Math.random() * 2 * degradationFactor * economicCycleFactor;
-                        this.player.stats[stat] = Math.max(0, this.player.stats[stat] - decay);
-                    });
-
-                    this.player.stats.democracy -= Math.random() * 0.5;
-                    this.player.stats.democracy = Math.max(20, this.player.stats.democracy);
-
-                    this.calculateGovernmentMetrics();
-                    this.updateUI();
-                    this.checkGovernmentSkip();
-                    
-                    if (this.player.stats.months <= 0) {
-                        this.endTerm();
-                    }
-                }, 2500);
-            }
-
-            calculateGovernmentMetrics() {
-                const { economy, social, security, environment, democracy } = this.player.stats;
-                
-                const performanceWeight = (economy * 0.25) + (social * 0.25) + (security * 0.20) + (environment * 0.15) + (democracy * 0.15);
-                const congressWeight = (this.realPolitics.congressApproval / 100) * 0.3;
-                const mediaWeight = ((100 - this.realPolitics.mediaHostility) / 100) * 0.2;
-                
-                this.player.stats.popularity = Math.round((performanceWeight * 0.5) + (congressWeight * 100) + (mediaWeight * 100) + (this.player.stats.popularity * 0.3));
-                this.player.stats.popularity = Math.max(0, Math.min(100, this.player.stats.popularity));
-
-                const democraticHealth = democracy;
-                const popularSupport = this.player.stats.popularity;
-                const congressSupport = this.realPolitics.congressApproval;
-                const mediaSupport = 100 - this.realPolitics.mediaHostility;
-                
-                this.player.stats.impeachmentRisk = Math.max(0, Math.min(100, 
-                    100 - ((democraticHealth * 0.3) + (popularSupport * 0.3) + (congressSupport * 0.25) + (mediaSupport * 0.15))
-                ));
-
-                if (this.player.stats.impeachmentRisk >= 85 && this.player.stats.popularity <= 15) {
-                    this.triggerImpeachment();
-                }
-
-                if (this.player.stats.economy <= 15 && Math.random() < 0.3) {
-                    this.triggerEconomicCollapse();
-                }
-
-                if (this.player.stats.democracy <= 25 && Math.random() < 0.2) {
-                    this.triggerConstitutionalCrisis();
-                }
-            }
-
-            triggerGovernmentCrisis() {
-                const crisis = this.generateIntelligentCrisis();
-                this.showCrisisModal(crisis);
-            }
-
-            triggerImpeachment() {
-                clearInterval(this.timers.government);
-                this.gameHistory.performance.gameEnded = 'impeachment';
-                this.gameHistory.crises.push({
-                    type: 'impeachment',
-                    timestamp: Date.now(),
-                    finalStats: { ...this.player.stats }
-                });
-                
-                this.showModal(
-                    "⚖️ IMPEACHMENT APROVADO", 
-                    "O Congresso Nacional aprovou seu impeachment. Você foi afastado definitivamente da Presidência.", 
-                    [
-                        { text: "Analisar Causas (PDF)", callback: () => this.exportToPDF() },
-                        { text: "Nova Tentativa", callback: () => this.init() }
-                    ]
-                );
-            }
-
-            triggerEconomicCollapse() {
-                clearInterval(this.timers.government);
-                this.gameHistory.performance.gameEnded = 'economic_collapse';
-                
-                this.showModal(
-                    "📉 COLAPSO ECONÔMICO NACIONAL", 
-                    "A economia brasileira entrou em colapso total sob sua gestão.", 
-                    [
-                        { text: "Relatório da Catástrofe", callback: () => this.exportToPDF() },
-                        { text: "Recomeçar", callback: () => this.init() }
-                    ]
-                );
-            }
-
-            triggerConstitutionalCrisis() {
-                clearInterval(this.timers.government);
-                this.gameHistory.performance.gameEnded = 'constitutional_crisis';
-                
-                this.showModal(
-                    "📜 CRISE CONSTITUCIONAL", 
-                    "Suas ações minaram gravemente as instituições democráticas.", 
-                    [
-                        { text: "Análise Institucional", callback: () => this.exportToPDF() },
-                        { text: "Nova Simulação", callback: () => this.init() }
-                    ]
-                );
-            }
-
-            endTerm() {
-                clearInterval(this.timers.government);
-                
-                this.gameHistory.performance.finalPopularity = this.player.stats.popularity;
-                this.gameHistory.performance.completedTerms = this.player.term;
-                
-                if (this.player.term >= this.player.maxTerms) {
-                    this.gameHistory.performance.gameEnded = 'completed_max_terms';
-                    this.showModal(
-                        "🏛️ LEGADO PRESIDENCIAL CONSOLIDADO", 
-                        `Você completou ${this.player.maxTerms} mandatos constitucionais.`, 
-                        [
-                            { text: "Relatório Final Completo", callback: () => this.exportToPDF() },
-                            { text: "Nova Era Política", callback: () => this.init() }
-                        ]
-                    );
-                } else if (this.player.stats.popularity >= 60 && this.realPolitics.congressApproval >= 50) {
-                    this.showModal(
-                        "🗳️ CENÁRIO DE REELEIÇÃO FAVORÁVEL", 
-                        `Com ${Math.round(this.player.stats.popularity)}% de aprovação, sua reeleição é viável.`, 
-                        [
-                            { text: "Disputar Reeleição", callback: () => this.startReelection() },
-                            { text: "Retirar-se com Dignidade", callback: () => this.showFinalResults() }
-                        ]
-                    );
-                } else {
-                    this.gameHistory.performance.gameEnded = 'term_completed_low_approval';
-                    this.showModal(
-                        "📊 FIM DE MANDATO", 
-                        `Com ${Math.round(this.player.stats.popularity)}% de aprovação, sua reeleição é inviável.`, 
-                        [
-                            { text: "Balanço do Governo", callback: () => this.exportToPDF() },
-                            { text: "Novo Desafio", callback: () => this.init() }
-                        ]
-                    );
-                }
-            }
-
-            startReelection() {
-                this.player.term++;
-                this.player.stats.days = 90;
-                this.player.stats.funds = Math.max(20, Math.round(this.player.stats.popularity * 0.5));
-                this.player.stats.support = Math.round(this.player.stats.popularity * 0.3);
-                this.player.stats.approval = Math.round(this.player.stats.popularity * 0.7);
-                this.player.stats.polls = Math.round(this.player.stats.popularity * 0.8);
-                this.player.stats.months = 48;
-                
-                this.player.stats.coalitions = 1;
-                this.player.stats.mediaPresence = 20;
-                this.player.stats.debateScore = 0;
-                
-                this.startCampaign();
-            }
-
-            exportToPDF() {
-                if (typeof window.jsPDF === 'undefined') {
-                    const script = document.createElement('script');
-                    script.src = 'https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js';
-                    script.onload = () => {
-                        setTimeout(() => this.generateAdvancedPDF(), 1000);
-                    };
-                    script.onerror = () => {
-                        this.showNotification("❌ Erro ao carregar gerador de PDF.");
-                    };
-                    document.head.appendChild(script);
-                    this.showNotification("📥 Carregando gerador de PDF...");
-                    return;
-                }
-
-                this.generateAdvancedPDF();
-            }
-
-            generateAdvancedPDF() {
-                try {
-                    const { jsPDF } = window.jsPDF;
-                    const doc = new jsPDF();
-                    
-                    let yPos = 20;
-                    const pageHeight = 280;
-                    const margin = 20;
-                    
-                    doc.setFont("helvetica", "bold");
-                    doc.setFontSize(22);
-                    doc.setTextColor(44, 62, 80);
-                    doc.text('REPÚBLICA FEDERATIVA DO BRASIL', 105, yPos, { align: 'center' });
-                    
-                    yPos += 8;
-                    doc.setFontSize(16);
-                    doc.setTextColor(52, 152, 219);
-                    doc.text('Relatório Oficial de Performance Política', 105, yPos, { align: 'center' });
-                    
-                    yPos += 15;
-                    doc.setDrawColor(44, 62, 80);
-                    doc.line(margin, yPos, 190, yPos);
-                    
-                    yPos += 15;
-                    doc.setFont("helvetica", "bold");
-                    doc.setFontSize(14);
-                    doc.setTextColor(44, 62, 80);
-                    doc.text('IDENTIFICAÇÃO POLÍTICA', margin, yPos);
-                    
-                    yPos += 10;
-                    doc.setFont("helvetica", "normal");
-                    doc.setFontSize(11);
-                    doc.text(`Nome: ${this.player.name || 'Não informado'}`, margin, yPos);
-                    yPos += 6;
-                    doc.text(`Orientação Ideológica: ${this.player.ideology ? this.player.ideology.toUpperCase() : 'Não definida'}`, margin, yPos);
-                    yPos += 6;
-                    doc.text(`Mandatos Exercidos: ${this.player.term} de ${this.player.maxTerms}`, margin, yPos);
-                    yPos += 6;
-                    doc.text(`Tempo de Simulação: ${this.formatPlayTime()}`, margin, yPos);
-                    
-                    if (this.gameHistory.performance.electionScore) {
-                        yPos += 15;
-                        doc.setFont("helvetica", "bold");
-                        doc.setFontSize(14);
-                        doc.text('DESEMPENHO ELEITORAL', margin, yPos);
-                        
-                        yPos += 10;
-                        doc.setFont("helvetica", "normal");
-                        doc.setFontSize(11);
-                        
-                        const electionResult = this.gameHistory.performance.electionScore >= 65 ? 'ELEITO' : 'DERROTADO';
-                        const resultColor = this.gameHistory.performance.electionScore >= 65 ? [39, 174, 96] : [231, 76, 60];
-                        
-                        doc.text('Resultado Final: ', margin, yPos);
-                        doc.setTextColor(...resultColor);
-                        doc.setFont("helvetica", "bold");
-                        doc.text(electionResult, margin + 35, yPos);
-                        
-                        doc.setTextColor(0, 0, 0);
-                        doc.setFont("helvetica", "normal");
-                        yPos += 6;
-                        doc.text(`Percentual de Votos: ${this.gameHistory.performance.electionScore}%`, margin, yPos);
-                    }
-                    
-                    if (this.gameState === 'government' || this.gameHistory.performance.completedTerms) {
-                        yPos += 15;
-                        if (yPos > pageHeight) { doc.addPage(); yPos = 20; }
-                        
-                        doc.setFont("helvetica", "bold");
-                        doc.setFontSize(14);
-                        doc.setTextColor(44, 62, 80);
-                        doc.text('ÍNDICES DE GOVERNANÇA', margin, yPos);
-                        
-                        yPos += 10;
-                        doc.setFont("helvetica", "normal");
-                        doc.setFontSize(11);
-                        
-                        const govStats = [
-                            { label: 'Gestão Econômica', value: this.player.stats.economy },
-                            { label: 'Políticas Sociais', value: this.player.stats.social },
-                            { label: 'Segurança Pública', value: this.player.stats.security },
-                            { label: 'Relações Internacionais', value: this.player.stats.international },
-                            { label: 'Proteção Ambiental', value: this.player.stats.environment },
-                            { label: 'Fortaleza Democrática', value: this.player.stats.democracy }
-                        ];
-                        
-                        govStats.forEach(stat => {
-                            if (yPos > pageHeight) { doc.addPage(); yPos = 20; }
-                            doc.text(`${stat.label}: ${Math.round(stat.value)}%`, margin, yPos);
-                            yPos += 6;
-                        });
-                        
-                        yPos += 10;
-                        doc.text(`Aprovação Popular Final: ${Math.round(this.player.stats.popularity)}%`, margin, yPos);
-                        yPos += 6;
-                        doc.text(`Risco de Impeachment: ${Math.round(this.player.stats.impeachmentRisk)}%`, margin, yPos);
-                    }
-                    
-                    yPos += 15;
-                    if (yPos > pageHeight) { doc.addPage(); yPos = 20; }
-                    
-                    doc.setFont("helvetica", "bold");
-                    doc.setFontSize(14);
-                    doc.text('AVALIAÇÃO HISTÓRICA', margin, yPos);
-                    
-                    yPos += 10;
-                    doc.setFont("helvetica", "normal");
-                    doc.setFontSize(12);
-                    
-                    let finalEvaluation = "Desempenho Insatisfatório";
-                    
-                    if (this.gameState === 'government' || this.gameHistory.performance.completedTerms) {
-                        const govStats = ['economy', 'social', 'security', 'international', 'environment'];
-                        const avgPerf = govStats.reduce((sum, stat) => sum + (this.player.stats[stat] || 0), 0) / govStats.length;
-                        
-                        if (avgPerf >= 75) finalEvaluation = "Presidente Excepcional";
-                        else if (avgPerf >= 60) finalEvaluation = "Presidente Competente";
-                        else if (avgPerf >= 45) finalEvaluation = "Presidente Regular";
-                        else if (avgPerf >= 30) finalEvaluation = "Presidente Deficiente";
-                    }
-                    
-                    doc.text(`Classificação Final: ${finalEvaluation}`, margin, yPos);
-                    
-                    doc.setFontSize(8);
-                    doc.setTextColor(128, 128, 128);
-                    doc.text('República Digital - Simulador Político Avançado', 105, 285, { align: 'center' });
-                    doc.text(`Documento gerado em ${new Date().toLocaleDateString('pt-BR')}`, 105, 290, { align: 'center' });
-                    
-                    const fileName = `Relatorio_Presidencial_${this.player.name.replace(/[^a-zA-Z0-9]/g, '_')}_${Date.now()}.pdf`;
-                    doc.save(fileName);
-                    
-                    this.showNotification("✅ Relatório oficial exportado com sucesso!");
-                    
-                } catch (error) {
-                    console.error('Erro na geração do PDF:', error);
-                    this.showNotification("❌ Erro técnico na geração do PDF.");
-                }
-            }
-
-            formatPlayTime() {
-                const totalMs = Date.now() - this.player.startTime;
-                const hours = Math.floor(totalMs / 3600000);
-                const minutes = Math.floor((totalMs % 3600000) / 60000);
-                const seconds = Math.floor((totalMs % 60000) / 1000);
-                
-                if (hours > 0) {
-                    return `${hours}h ${minutes}m ${seconds}s`;
-                } else {
-                    return `${minutes}m ${seconds}s`;
-                }
-            }
-
-            startAutoSave() {
-                setInterval(() => {
-                    if (this.gameState !== 'setup') {
-                        this.autoSave();
-                    }
-                }, 60000);
-            }
-
-            autoSave() {
-                const saveData = {
-                    player: this.player,
-                    gameState: this.gameState,
-                    gameHistory: this.gameHistory,
-                    aiSystem: this.aiSystem,
-                    realPolitics: this.realPolitics,
-                    saveTime: Date.now()
-                };
-                
-                try {
-                    localStorage.setItem('republicaDigital_save', JSON.stringify(saveData));
-                } catch(e) {
-                    console.error("Erro no auto-save:", e);
-                }
-            }
-
-            manualSave() {
-                this.autoSave();
-                this.showNotification("💾 Jogo salvo manualmente!");
-            }
-
-            loadGame() {
-                try {
-                    const savedData = localStorage.getItem('republicaDigital_save');
-                    if (!savedData) {
-                        this.showNotification("📁 Nenhum jogo salvo encontrado!");
-                        return;
-                    }
-
-                    const saveData = JSON.parse(savedData);
-                    this.player = saveData.player || this.getInitialPlayerState();
-                    this.gameState = saveData.gameState || 'setup';
-                    this.gameHistory = saveData.gameHistory || { actions: [], events: [], decisions: [], performance: {} };
-                    this.aiSystem = saveData.aiSystem || this.aiSystem;
-                    this.realPolitics = saveData.realPolitics || this.realPolitics;
-
-                    this.showScreen(this.gameState);
-                    this.updateUI();
-                    
-                    if (this.gameState === 'campaign') {
-                        this.setupCampaignActions();
-                        this.startCampaignTimer();
-                    } else if (this.gameState === 'government') {
-                        this.setupGovernmentActions();
-                        this.startGovernmentTimer();
-                    }
-                    
-                    this.showNotification("📁 Jogo carregado com sucesso!");
-                } catch(e) {
-                    console.error("Erro ao carregar:", e);
-                    this.showNotification("❌ Erro ao carregar jogo salvo!");
-                }
-            }
-
-            showScreen(screenId) {
-                document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
-                const screen = document.getElementById(screenId);
-                if (screen) screen.classList.add('active');
-            }
-
-            renderActions(containerId, actions, callback) {
-                const container = document.getElementById(containerId);
-                if (!container) return;
-                
-                container.innerHTML = '';
-                
-                actions.forEach(action => {
-                    const canAfford = this.canAffordAction(action.costs);
-                    const actionDiv = document.createElement('div');
-                    actionDiv.className = `action-card ${!canAfford ? 'disabled' : ''}`;
-                    
-                    if (canAfford) {
-                        actionDiv.addEventListener('click', () => {
-                            callback(action);
-                            container.scrollTop = 0;
-                        });
-                    }
-
-                    const costsText = Object.entries(action.costs)
-                        .map(([k, v]) => `${this.getResourceSymbol(k)}${v}`)
-                        .join(' ');
-                    
-                    const effectsHTML = Object.entries(action.effects)
-                        .map(([k, v]) => `<span class="effect ${v > 0 ? 'positive' : 'negative'}">${v > 0 ? '+' : ''}${v} ${this.getStatName(k)}</span>`)
-                        .join('');
-
-                    const difficultyBadge = action.difficulty ? 
-                        `<div style="background: ${action.difficulty === 'extreme' ? 'var(--danger)' : 'var(--warning)'}; color: white; padding: 2px 6px; border-radius: 10px; font-size: 10px; margin-left: 8px;">${action.difficulty.toUpperCase()}</div>` : '';
-
-                    actionDiv.innerHTML = `
-                        <div class="action-title">
-                            <span>${action.title}</span>
-                            <div style="display: flex; align-items: center;">
-                                <span class="action-cost">${costsText}</span>
-                                ${difficultyBadge}
-                            </div>
-                        </div>
-                        <div class="action-description">${action.description}</div>
-                        <div class="action-effects">${effectsHTML}</div>
-                    `;
-                    
-                    container.appendChild(actionDiv);
-                });
-            }
-
-            showModal(title, content, choices = []) {
-                const modal = document.getElementById('modal');
-                const modalTitle = document.getElementById('modal-title');
-                const modalBody = document.getElementById('modal-body');
-                const modalChoices = document.getElementById('modal-choices');
-                
-                if (!modal) return;
-                
-                modalTitle.textContent = title;
-                modalBody.innerHTML = content.replace(/\n/g, '<br>');
-                modalChoices.innerHTML = '';
-
-                if (choices.length === 0) {
-                    choices.push({ text: "OK", callback: () => {} });
-                }
-
-                choices.forEach(choice => {
-                    const btn = document.createElement('button');
-                    btn.className = 'btn';
-                    btn.textContent = choice.text;
-                    btn.onclick = () => {
-                        modal.classList.remove('active');
-                        if (choice.callback) choice.callback();
-                    };
-                    modalChoices.appendChild(btn);
-                });
-                
-                modal.classList.add('active');
-            }
-
-            showCrisisModal(crisis) {
-                this.showModal(
-                    crisis.title, 
-                    crisis.description, 
-                    crisis.choices.map(choice => ({
-                        text: choice.text,
-                        callback: () => {
-                            this.applyEffects(choice.effects);
-                            this.gameHistory.events.push({
-                                event: crisis.title,
-                                choice: choice.text,
-                                timestamp: Date.now()
-                            });
-                            this.updateUI();
-                        }
-                    }))
-                );
-            }
-
-            showNotification(message) {
-                const notification = document.createElement('div');
-                notification.className = 'notification';
-                notification.textContent = message;
-                document.body.appendChild(notification);
-                
-                setTimeout(() => {
-                    if (notification.parentNode) {
-                        notification.parentNode.removeChild(notification);
-                    }
-                }, 3000);
-            }
-
-            updateUI() {
-                const { stats } = this.player;
-                const safeSet = (id, val) => {
-                    const el = document.getElementById(id);
-                    if (el) el.textContent = val;
-                };
-
-                const termDisplay = document.getElementById('term-display');
-                if (termDisplay) {
-                    termDisplay.textContent = this.gameState === 'government' ? `${this.player.term}º Mandato` : '';
-                }
-
-                safeSet('days-left', Math.max(0, stats.days));
-                safeSet('funds', Math.max(0, stats.funds));
-                safeSet('support', Math.max(0, Math.round(stats.support)));
-                safeSet('polls', Math.max(0, Math.round(stats.polls)));
-
-                const campaignStatsEl = document.getElementById('campaign-stats');
-                if (campaignStatsEl) {
-                    campaignStatsEl.innerHTML = `
-                        <div class="stat-item"><div class="stat-value">${Math.round(stats.approval)}</div><div class="stat-label">Aprovação</div></div>
-                        <div class="stat-item"><div class="stat-value">${stats.coalitions}</div><div class="stat-label">Coligações</div></div>
-                        <div class="stat-item"><div class="stat-value">${Math.round(stats.mediaPresence)}</div><div class="stat-label">Mídia</div></div>
-                        <div class="stat-item"><div class="stat-value">${Math.round(stats.debateScore)}</div><div class="stat-label">Debates</div></div>
-                    `;
-                }
-
-                safeSet('months-left', Math.max(0, stats.months));
-                safeSet('gdp', Math.max(0, Math.round(stats.gdp)));
-                safeSet('population', '215M');
-                
-                const governmentStatsEl = document.getElementById('government-stats');
-                if (governmentStatsEl) {
-                    governmentStatsEl.innerHTML = `
-                        <div class="stat-item"><div class="stat-value">${Math.round(stats.economy)}</div><div class="stat-label">Economia</div></div>
-                        <div class="stat-item"><div class="stat-value">${Math.round(stats.social)}</div><div class="stat-label">Social</div></div>
-                        <div class="stat-item"><div class="stat-value">${Math.round(stats.security)}</div><div class="stat-label">Segurança</div></div>
-                        <div class="stat-item"><div class="stat-value">${Math.round(stats.international)}</div><div class="stat-label">Internacional</div></div>
-                        <div class="stat-item"><div class="stat-value">${Math.round(stats.environment)}</div><div class="stat-label">Ambiente</div></div>
-                        <div class="stat-item"><div class="stat-value">${Math.round(stats.democracy)}</div><div class="stat-label">Democracia</div></div>
-                    `;
-                }
-                
-                safeSet('popularity-percent', `${Math.round(stats.popularity)}%`);
-                const popularityBar = document.getElementById('popularity-bar');
-                if (popularityBar) {
-                    popularityBar.style.width = `${Math.max(0, Math.min(100, stats.popularity))}%`;
-                }
-                
-                safeSet('impeachment-percent', `${Math.round(stats.impeachmentRisk)}%`);
-                const impeachmentBar = document.getElementById('impeachment-bar');
-                if (impeachmentBar) {
-                    impeachmentBar.style.width = `${Math.max(0, Math.min(100, stats.impeachmentRisk))}%`;
-                }
-            }
-
-            applyCosts(costs) {
-                Object.entries(costs).forEach(([resource, cost]) => {
-                    this.player.stats[resource] = Math.max(0, this.player.stats[resource] - cost);
-                });
-            }
-
-            applyEffects(effects) {
-                Object.entries(effects).forEach(([stat, value]) => {
-                    if (this.player.stats.hasOwnProperty(stat)) {
-                        this.player.stats[stat] = Math.max(0, Math.min(100, this.player.stats[stat] + value));
-                    }
-                });
-            }
-
-            canAffordAction(costs) {
-                return Object.entries(costs).every(([resource, cost]) => 
-                    this.player.stats[resource] >= cost
-                );
-            }
-
-            getResourceSymbol(resource) {
-                const symbols = { funds: '💰', days: '⏰', months: '🗓️' };
-                return symbols[resource] || '';
-            }
-
-            getStatName(stat) {
-                const names = {
-                    support: 'Apoio', approval: 'Aprovação', mediaPresence: 'Mídia',
-                    debateScore: 'Debate', coalitions: 'Coligações', economy: 'Economia',
-                    social: 'Social', security: 'Segurança', international: 'Internacional',
-                    environment: 'Ambiente', democracy: 'Democracia', popularity: 'Popularidade',
-                    polls: 'Pesquisas', gdp: 'PIB', population: 'População'
-                };
-                return names[stat] || stat;
-            }
-
-            showFinalResults() {
-                const govStats = ['economy', 'social', 'security', 'international', 'environment'];
-                const avgPerf = govStats.reduce((sum, stat) => sum + this.player.stats[stat], 0) / govStats.length;
-                
-                let evaluation = "Problemático 📉";
-                if (avgPerf >= 80) evaluation = "Exemplar 🏆";
-                else if (avgPerf >= 65) evaluation = "Muito Bom 🌟";
-                else if (avgPerf >= 50) evaluation = "Bom 👍";
-                else if (avgPerf >= 35) evaluation = "Regular 😐";
-
-                this.gameHistory.performance.finalEvaluation = evaluation;
-                this.gameHistory.performance.avgPerformance = Math.round(avgPerf);
-
-                this.showModal(
-                    "📊 LEGADO PRESIDENCIAL", 
-                    `<strong>Avaliação Final: ${evaluation}</strong><br><br>
-                     Performance Média: ${Math.round(avgPerf)}%<br>
-                     Mandatos Exercidos: ${this.player.term}<br>
-                     Aprovação Final: ${Math.round(this.player.stats.popularity)}%<br>
-                     Tempo Total: ${this.formatPlayTime()}`, 
-                    [
-                        { text: "Exportar Relatório Completo", callback: () => this.exportToPDF() },
-                        { text: "Nova Simulação", callback: () => this.init() }
-                    ]
-                );
-            }
-        }
-
-        let game;
-        document.addEventListener('DOMContentLoaded', () => {
-            game = new RepublicaDigital();
-        });
-    </script>
+    <!-- JavaScript principal do jogo -->
+    <script src="script.js"></script>
 </body>
 </html>

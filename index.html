@@ -434,7 +434,7 @@
                 <span class="subtitle" id="header-subtitle">Simulador Político</span>
             </div>
             <div class="header-controls">
-                <button class="icon-btn" id="save-btn" title="Salvar Jogo" onclick="game && game.saveGame()">💾</button>
+                <button class="icon-btn" id="save-btn" title="Salvar Jogo" onclick="game && game.manualSave()">💾</button>
                 <button class="icon-btn" id="load-btn" title="Carregar Jogo" onclick="game && game.loadGame()">📁</button>
                 <button class="icon-btn" id="export-btn" title="Exportar PDF" onclick="game && game.exportToPDF()">📄</button>
                 <div id="term-display" style="font-size: 14px; font-weight: 600;"></div>
@@ -580,7 +580,7 @@
                 this.resetUI();
                 this.updateUI();
                 this.showScreen('setup');
-                this.autoSaveInterval();
+                this.startAutoSave();
             }
 
             getInitialPlayerState() {
@@ -774,7 +774,7 @@
                         break;
                 }
                 this.updateUI();
-                this.saveGame(); // Auto-save em transições
+                this.autoSave(); // Save silencioso em transições
             }
 
             startCampaign() { 
@@ -1189,8 +1189,9 @@
                 return `${minutes}m ${seconds}s`;
             }
 
-            // === SISTEMA DE SALVAMENTO ===
-            saveGame() {
+            // === SISTEMA DE SALVAMENTO CORRIGIDO ===
+            // Salvamento automático silencioso
+            autoSave() {
                 const saveData = {
                     player: this.player,
                     gameState: this.gameState,
@@ -1201,10 +1202,16 @@
                 
                 try {
                     localStorage.setItem('republicaDigital_save', JSON.stringify(saveData));
-                    this.showNotification("Jogo salvo automaticamente! 💾");
+                    // REMOVIDO: showNotification para não irritar o usuário
                 } catch(e) {
                     console.error("Erro ao salvar:", e);
                 }
+            }
+
+            // Salvamento manual com feedback
+            manualSave() {
+                this.autoSave();
+                this.showNotification("Jogo salvo manualmente! 💾");
             }
 
             loadGame() {
@@ -1229,162 +1236,204 @@
                 }
             }
 
-            autoSaveInterval() {
+            startAutoSave() {
+                // Auto-save silencioso a cada 45 segundos (menos frequente)
                 setInterval(() => {
                     if (this.gameState !== 'setup') {
-                        this.saveGame();
+                        this.autoSave(); // SEM notificação
                     }
-                }, 30000); // Auto-save a cada 30 segundos
+                }, 45000);
             }
 
-            // === SISTEMA DE EXPORTAÇÃO PDF ===
+            // === SISTEMA DE EXPORTAÇÃO PDF CORRIGIDO ===
             exportToPDF() {
-                if (typeof window.jsPDF === 'undefined') {
-                    this.showNotification("Erro: Biblioteca PDF não carregada!");
-                    return;
-                }
+                try {
+                    // Verifica se jsPDF está carregado
+                    if (typeof window.jsPDF === 'undefined') {
+                        this.showNotification("⚠️ Carregando biblioteca PDF...");
+                        
+                        // Tenta carregar novamente
+                        const script = document.createElement('script');
+                        script.src = 'https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js';
+                        script.onload = () => {
+                            setTimeout(() => this.generatePDF(), 500);
+                        };
+                        script.onerror = () => {
+                            this.showNotification("❌ Erro ao carregar biblioteca PDF. Tente novamente.");
+                        };
+                        document.head.appendChild(script);
+                        return;
+                    }
 
-                const { jsPDF } = window.jsPDF;
-                const doc = new jsPDF();
-                
-                // Configuração de cores e fontes
-                const primaryColor = [44, 62, 80];
-                const accentColor = [52, 152, 219];
-                
-                let yPosition = 20;
-                
-                // CABEÇALHO
-                doc.setFontSize(24);
-                doc.setTextColor(...primaryColor);
-                doc.text('REPÚBLICA DIGITAL', 105, yPosition, { align: 'center' });
-                
-                yPosition += 10;
-                doc.setFontSize(16);
-                doc.setTextColor(...accentColor);
-                doc.text('Relatório de Performance Política', 105, yPosition, { align: 'center' });
-                
-                yPosition += 20;
-                doc.setDrawColor(...primaryColor);
-                doc.line(20, yPosition, 190, yPosition);
-                
-                // INFORMAÇÕES DO JOGADOR
-                yPosition += 15;
-                doc.setFontSize(14);
-                doc.setTextColor(...primaryColor);
-                doc.text('PERFIL DO CANDIDATO', 20, yPosition);
-                
-                yPosition += 10;
-                doc.setFontSize(12);
-                doc.text(`Nome: ${this.player.name}`, 20, yPosition);
-                yPosition += 6;
-                doc.text(`Orientação Política: ${this.player.ideology.charAt(0).toUpperCase() + this.player.ideology.slice(1)}`, 20, yPosition);
-                yPosition += 6;
-                doc.text(`Mandatos Exercidos: ${this.player.term}`, 20, yPosition);
-                yPosition += 6;
-                doc.text(`Tempo de Jogo: ${this.formatPlayTime()}`, 20, yPosition);
-                
-                // ESTATÍSTICAS FINAIS
-                yPosition += 20;
-                doc.setFontSize(14);
-                doc.setTextColor(...primaryColor);
-                doc.text('ESTATÍSTICAS FINAIS', 20, yPosition);
-                
-                yPosition += 10;
-                doc.setFontSize(12);
-                
-                if (this.gameState === 'government' || this.gameHistory.performance.electionScore) {
-                    doc.text(`Score Eleitoral: ${this.gameHistory.performance.electionScore || 'N/A'}%`, 20, yPosition);
-                    yPosition += 6;
+                    this.generatePDF();
+                } catch(error) {
+                    console.error('Erro na exportação PDF:', error);
+                    this.showNotification("❌ Erro ao exportar PDF. Verifique sua conexão.");
                 }
-                
-                const govStats = ['economy', 'social', 'security', 'international', 'environment', 'democracy'];
-                govStats.forEach(stat => {
-                    const value = Math.round(this.player.stats[stat]);
-                    const label = this.getStatName(stat);
-                    doc.text(`${label}: ${value}%`, 20, yPosition);
-                    yPosition += 6;
-                });
-                
-                doc.text(`Aprovação Popular Final: ${Math.round(this.player.stats.popularity)}%`, 20, yPosition);
-                yPosition += 6;
-                doc.text(`Risco de Impeachment: ${Math.round(this.player.stats.impeachmentRisk)}%`, 20, yPosition);
-                
-                // ANÁLISE DE PERFORMANCE
-                yPosition += 15;
-                doc.setFontSize(14);
-                doc.setTextColor(...primaryColor);
-                doc.text('ANÁLISE DE PERFORMANCE', 20, yPosition);
-                
-                yPosition += 10;
-                doc.setFontSize(12);
-                const avgPerf = govStats.reduce((sum, stat) => sum + this.player.stats[stat], 0) / govStats.length;
-                doc.text(`Performance Média Governamental: ${Math.round(avgPerf)}%`, 20, yPosition);
-                
-                yPosition += 6;
-                let legacyText = "Legado Político: ";
-                if (avgPerf >= 80) legacyText += "Presidente Exemplar";
-                else if (avgPerf >= 65) legacyText += "Presidente Muito Bom";
-                else if (avgPerf >= 50) legacyText += "Presidente Competente";
-                else if (avgPerf >= 35) legacyText += "Presidente Regular";
-                else legacyText += "Presidente Problemático";
-                
-                doc.text(legacyText, 20, yPosition);
-                
-                // HISTÓRICO DE AÇÕES
-                if (this.gameHistory.actions.length > 0) {
-                    yPosition += 15;
-                    doc.setFontSize(14);
-                    doc.text('PRINCIPAIS AÇÕES EXECUTADAS', 20, yPosition);
-                    
-                    yPosition += 10;
-                    doc.setFontSize(10);
-                    const recentActions = this.gameHistory.actions.slice(-10);
-                    recentActions.forEach(action => {
-                        if (yPosition > 250) {
-                            doc.addPage();
-                            yPosition = 20;
-                        }
-                        const date = new Date(action.timestamp).toLocaleString('pt-BR');
-                        doc.text(`${date} - ${action.action} (${action.state})`, 20, yPosition);
-                        yPosition += 5;
-                    });
-                }
-                
-                // EVENTOS IMPORTANTES
-                if (this.gameHistory.events.length > 0) {
-                    yPosition += 10;
-                    doc.setFontSize(14);
-                    doc.text('EVENTOS IMPORTANTES', 20, yPosition);
-                    
-                    yPosition += 10;
-                    doc.setFontSize(10);
-                    this.gameHistory.events.forEach(event => {
-                        if (yPosition > 250) {
-                            doc.addPage();
-                            yPosition = 20;
-                        }
-                        const date = new Date(event.timestamp).toLocaleString('pt-BR');
-                        doc.text(`${date} - ${event.event}`, 20, yPosition);
-                        yPosition += 4;
-                        doc.text(`Decisão: ${event.choice}`, 25, yPosition);
-                        yPosition += 8;
-                    });
-                }
-                
-                // RODAPÉ
-                doc.setFontSize(8);
-                doc.setTextColor(128, 128, 128);
-                doc.text('Gerado por República Digital - Simulador Político Avançado', 105, 285, { align: 'center' });
-                doc.text(`Data: ${new Date().toLocaleString('pt-BR')}`, 105, 290, { align: 'center' });
-                
-                // DOWNLOAD
-                const fileName = `RelatorioPresidencial_${this.player.name.replace(/\s+/g, '_')}_${Date.now()}.pdf`;
-                doc.save(fileName);
-                
-                this.showNotification("Relatório PDF exportado com sucesso! 📄");
             }
 
-            // === FUNÇÕES DE UI E RENDERIZAÇÃO ===
+            generatePDF() {
+                try {
+                    const { jsPDF } = window.jsPDF;
+                    const doc = new jsPDF();
+                    
+                    // Configuração
+                    const primaryColor = [44, 62, 80];
+                    const accentColor = [52, 152, 219];
+                    let yPos = 20;
+                    
+                    // CABEÇALHO
+                    doc.setFontSize(24);
+                    doc.setTextColor(...primaryColor);
+                    doc.text('REPÚBLICA DIGITAL', 105, yPos, { align: 'center' });
+                    
+                    yPos += 10;
+                    doc.setFontSize(16);
+                    doc.setTextColor(...accentColor);
+                    doc.text('Relatório de Performance Política', 105, yPos, { align: 'center' });
+                    
+                    yPos += 20;
+                    doc.setDrawColor(...primaryColor);
+                    doc.line(20, yPos, 190, yPos);
+                    
+                    // DADOS DO JOGADOR
+                    yPos += 15;
+                    doc.setFontSize(14);
+                    doc.setTextColor(...primaryColor);
+                    doc.text('PERFIL POLÍTICO', 20, yPos);
+                    
+                    yPos += 10;
+                    doc.setFontSize(12);
+                    doc.text(`Candidato: ${this.player.name || 'Sem nome'}`, 20, yPos);
+                    yPos += 6;
+                    doc.text(`Ideologia: ${this.player.ideology ? this.player.ideology.charAt(0).toUpperCase() + this.player.ideology.slice(1) : 'Não definida'}`, 20, yPos);
+                    yPos += 6;
+                    doc.text(`Mandatos: ${this.player.term}/${this.player.maxTerms}`, 20, yPos);
+                    yPos += 6;
+                    doc.text(`Tempo de Jogo: ${this.formatPlayTime()}`, 20, yPos);
+                    
+                    // ESTATÍSTICAS
+                    yPos += 20;
+                    doc.setFontSize(14);
+                    doc.text('ESTATÍSTICAS ATUAIS', 20, yPos);
+                    
+                    yPos += 10;
+                    doc.setFontSize(12);
+                    
+                    // Stats do governo se estiver governando
+                    if (this.gameState === 'government' || this.gameHistory.performance.electionScore) {
+                        if (this.gameHistory.performance.electionScore) {
+                            doc.text(`Resultado Eleitoral: ${this.gameHistory.performance.electionScore}%`, 20, yPos);
+                            yPos += 6;
+                        }
+                        
+                        const govStats = ['economy', 'social', 'security', 'international', 'environment', 'democracy'];
+                        govStats.forEach(stat => {
+                            const value = Math.round(this.player.stats[stat] || 0);
+                            const label = this.getStatName(stat);
+                            doc.text(`${label}: ${value}%`, 20, yPos);
+                            yPos += 6;
+                            
+                            // Quebra de página se necessário
+                            if (yPos > 250) {
+                                doc.addPage();
+                                yPos = 20;
+                            }
+                        });
+                        
+                        doc.text(`Aprovação Popular: ${Math.round(this.player.stats.popularity)}%`, 20, yPos);
+                        yPos += 6;
+                        doc.text(`Risco Impeachment: ${Math.round(this.player.stats.impeachmentRisk)}%`, 20, yPos);
+                        yPos += 6;
+                    } else {
+                        // Stats de campanha
+                        doc.text(`Aprovação: ${Math.round(this.player.stats.approval)}%`, 20, yPos);
+                        yPos += 6;
+                        doc.text(`Apoio: ${Math.round(this.player.stats.support)}%`, 20, yPos);
+                        yPos += 6;
+                        doc.text(`Fundos: R$ ${this.player.stats.funds}M`, 20, yPos);
+                        yPos += 6;
+                    }
+                    
+                    // ANÁLISE GERAL
+                    yPos += 15;
+                    if (yPos > 240) {
+                        doc.addPage();
+                        yPos = 20;
+                    }
+                    
+                    doc.setFontSize(14);
+                    doc.text('ANÁLISE DE DESEMPENHO', 20, yPos);
+                    
+                    yPos += 10;
+                    doc.setFontSize(12);
+                    
+                    if (this.gameState === 'government') {
+                        const govStats = ['economy', 'social', 'security', 'international', 'environment'];
+                        const avgPerf = govStats.reduce((sum, stat) => sum + (this.player.stats[stat] || 0), 0) / govStats.length;
+                        
+                        doc.text(`Performance Média: ${Math.round(avgPerf)}%`, 20, yPos);
+                        yPos += 6;
+                        
+                        let evaluation = "Desempenho Crítico";
+                        if (avgPerf >= 80) evaluation = "Excelente Presidente";
+                        else if (avgPerf >= 65) evaluation = "Bom Presidente";
+                        else if (avgPerf >= 50) evaluation = "Presidente Mediano";
+                        else if (avgPerf >= 35) evaluation = "Presidente Fraco";
+                        
+                        doc.text(`Avaliação: ${evaluation}`, 20, yPos);
+                        yPos += 6;
+                    }
+                    
+                    // HISTÓRICO RESUMIDO
+                    if (this.gameHistory.actions.length > 0) {
+                        yPos += 10;
+                        if (yPos > 230) {
+                            doc.addPage();
+                            yPos = 20;
+                        }
+                        
+                        doc.setFontSize(14);
+                        doc.text('AÇÕES PRINCIPAIS', 20, yPos);
+                        
+                        yPos += 10;
+                        doc.setFontSize(10);
+                        
+                        const recentActions = this.gameHistory.actions.slice(-8); // Últimas 8 ações
+                        recentActions.forEach(action => {
+                            if (yPos > 270) {
+                                doc.addPage();
+                                yPos = 20;
+                            }
+                            const date = new Date(action.timestamp).toLocaleDateString('pt-BR');
+                            doc.text(`${date} - ${action.action} (${action.state})`, 20, yPos);
+                            yPos += 5;
+                        });
+                    }
+                    
+                    // RODAPÉ
+                    const pageCount = doc.internal.getNumberOfPages();
+                    for (let i = 1; i <= pageCount; i++) {
+                        doc.setPage(i);
+                        doc.setFontSize(8);
+                        doc.setTextColor(128, 128, 128);
+                        doc.text(`República Digital - Página ${i} de ${pageCount}`, 105, 285, { align: 'center' });
+                        doc.text(`Gerado em: ${new Date().toLocaleString('pt-BR')}`, 105, 290, { align: 'center' });
+                    }
+                    
+                    // DOWNLOAD
+                    const fileName = `Relatorio_${this.player.name.replace(/[^a-zA-Z0-9]/g, '_') || 'Politico'}_${Date.now()}.pdf`;
+                    doc.save(fileName);
+                    
+                    this.showNotification("✅ PDF exportado com sucesso!");
+                    
+                } catch (error) {
+                    console.error('Erro ao gerar PDF:', error);
+                    this.showNotification("❌ Erro ao gerar PDF. Dados incompletos.");
+                }
+            }
+
+            // === FUNÇÕES DE UI ===
             showScreen(screenId) {
                 this.dom.screens.forEach(s => s.classList.remove('active'));
                 const screen = document.getElementById(screenId);

@@ -1,22 +1,19 @@
-// República Digital - Script Balanceado com Sistema de Ações
-// Tempo apenas para contagem, ações limitadas por fase
+// República Digital - Script com Fluxo Garantido
+// O jogo SEMPRE continua, nunca trava
 
 class RepublicaDigital {
     constructor() {
-        // Sistema de IA equilibrado
         this.aiSystem = {
-            adaptiveDifficulty: 1.0, // Dificuldade mediana
+            adaptiveDifficulty: 1.0,
             playerBehaviorPattern: { 
                 aggressive: 0, 
                 conservative: 0, 
                 populist: 0, 
                 progressive: 0 
             },
-            economicCycle: 'stable',
-            politicalCrisis: 0
+            economicCycle: 'stable'
         };
         
-        // Política realista mediana
         this.realPolitics = {
             congressApproval: 50,
             mediaHostility: 30,
@@ -25,10 +22,9 @@ class RepublicaDigital {
             internationalStanding: 60
         };
 
-        // Sistema de contadores
         this.phaseLimits = {
-            campaign: 4,    // 4 ações por campanha
-            government: 6   // 6 ações por mandato
+            campaign: 4,
+            government: 6
         };
 
         this.phaseCounters = {
@@ -40,8 +36,7 @@ class RepublicaDigital {
             actions: [],
             events: [],
             decisions: [],
-            performance: {},
-            crises: []
+            performance: {}
         };
 
         this.philosophyTexts = this.initPhilosophyTexts();
@@ -49,14 +44,12 @@ class RepublicaDigital {
     }
 
     init() {
-        // Limpa timers antigos
         Object.values(this.timers || {}).forEach(timer => clearInterval(timer));
         
         this.player = this.getInitialPlayerState();
         this.gameState = 'setup';
-        this.timers = { playTime: null }; // Apenas timer de tempo de jogo
+        this.timers = { playTime: null };
         
-        // Reset contadores
         this.phaseCounters.campaignActions = 0;
         this.phaseCounters.governmentActions = 0;
         
@@ -73,20 +66,18 @@ class RepublicaDigital {
             name: '', 
             ideology: '', 
             term: 1, 
-            maxTerms: 999, // Mandatos ilimitados
+            maxTerms: 999,
             startTime: Date.now(),
-            playTime: 0, // Tempo de jogo em segundos
+            playTime: 0,
             stats: {
-                // Stats de campanha balanceados
-                funds: 100,      // Dinheiro suficiente
-                support: 25,     // Apoio inicial
-                approval: 45,    // Aprovação inicial
-                coalitions: 2,   // Coligações
+                funds: 100,
+                support: 25,
+                approval: 45,
+                coalitions: 2,
                 mediaPresence: 30,
                 debateScore: 0, 
                 polls: 40,
                 
-                // Stats de governo balanceados
                 economy: 50,
                 social: 50,
                 security: 50,
@@ -96,25 +87,24 @@ class RepublicaDigital {
                 popularity: 50,
                 impeachmentRisk: 20,
                 gdp: 100,
-                governmentFunds: 200 // Fundos separados para governo
+                governmentFunds: 200
             }
         };
     }
 
     initPhilosophyTexts() {
         return {
-            esquerda: "Foco na justiça social, redistribuição de renda e direitos dos trabalhadores.",
-            centro: "Equilíbrio entre liberdade econômica e justiça social, priorizando o diálogo.",
-            direita: "Defesa do livre mercado, iniciativa privada e redução do Estado na economia."
+            esquerda: "Foco na justiça social e direitos dos trabalhadores.",
+            centro: "Equilíbrio entre liberdade econômica e justiça social.",
+            direita: "Defesa do livre mercado e iniciativa privada."
         };
     }
 
-    // === CONTADOR DE TEMPO DE JOGO ===
     startPlayTimeCounter() {
         this.timers.playTime = setInterval(() => {
             this.player.playTime++;
             this.updatePlayTimeDisplay();
-        }, 1000); // Incrementa a cada segundo
+        }, 1000);
     }
 
     updatePlayTimeDisplay() {
@@ -126,18 +116,15 @@ class RepublicaDigital {
             ? `${hours}h ${minutes}m ${seconds}s`
             : `${minutes}m ${seconds}s`;
             
-        // Atualiza display se existir
         const timeDisplay = document.getElementById('play-time-display');
         if (timeDisplay) {
             timeDisplay.textContent = `Tempo: ${timeStr}`;
         }
     }
 
-    // === SISTEMA DE IA INTELIGENTE ===
     updateAI() {
         const recentActions = this.gameHistory.actions.slice(-6);
         
-        // Analisa padrão comportamental
         this.aiSystem.playerBehaviorPattern = {
             aggressive: recentActions.filter(a => a.type === 'aggressive').length,
             conservative: recentActions.filter(a => a.type === 'conservative').length,
@@ -145,11 +132,9 @@ class RepublicaDigital {
             progressive: recentActions.filter(a => a.type === 'progressive').length
         };
 
-        // Ajusta contexto político baseado nas ações
         const dominantStyle = Object.keys(this.aiSystem.playerBehaviorPattern)
             .reduce((a, b) => this.aiSystem.playerBehaviorPattern[a] > this.aiSystem.playerBehaviorPattern[b] ? a : b);
 
-        // Reações do ambiente político
         switch(dominantStyle) {
             case 'aggressive':
                 this.realPolitics.mediaHostility += 2;
@@ -168,13 +153,11 @@ class RepublicaDigital {
                 break;
         }
 
-        // Mantém valores realistas
         Object.keys(this.realPolitics).forEach(key => {
             this.realPolitics[key] = Math.max(10, Math.min(90, this.realPolitics[key]));
         });
     }
 
-    // === EVENT LISTENERS ===
     setupEventListeners() {
         const nameInput = document.getElementById('candidate-name');
         const startBtn = document.getElementById('start-game');
@@ -206,7 +189,6 @@ class RepublicaDigital {
             });
         });
 
-        // Controles do header
         const saveBtn = document.getElementById('save-btn');
         const loadHeaderBtn = document.getElementById('load-btn');
         const exportBtn = document.getElementById('export-btn');
@@ -243,7 +225,7 @@ class RepublicaDigital {
         if (startBtn) startBtn.disabled = true;
     }
 
-    // === CAMPANHA COM LIMITE DE AÇÕES ===
+    // === CAMPANHA COM FLUXO GARANTIDO ===
     startCampaign() {
         this.gameState = 'campaign';
         this.phaseCounters.campaignActions = 0;
@@ -251,6 +233,39 @@ class RepublicaDigital {
         this.setupCampaignActions();
         this.updateUI();
         this.updateActionCounter();
+        
+        // VERIFICAÇÃO CRÍTICA: Se não tem fundos suficientes, força resultado
+        this.checkCampaignViability();
+    }
+
+    checkCampaignViability() {
+        // Se não pode fazer NENHUMA ação, força resultado imediato
+        const minCostAction = this.getMinimumCostAction();
+        if (this.player.stats.funds < minCostAction) {
+            setTimeout(() => {
+                this.showModal(
+                    "⚠️ FUNDOS INSUFICIENTES",
+                    "Sem recursos para continuar a campanha. O resultado será baseado no desempenho atual.",
+                    [{ text: "Ver Resultado", callback: () => this.processCampaignResult() }]
+                );
+            }, 500);
+        }
+    }
+
+    getMinimumCostAction() {
+        // Retorna o custo da ação mais barata disponível
+        const actions = [
+            { costs: { funds: 25 } },
+            { costs: { funds: 35 } },
+            { costs: { funds: 20 } },
+            { costs: { funds: 40 } },
+            { costs: { funds: 30 } },
+            { costs: { funds: 25 } },
+            { costs: { funds: 15 } },
+            { costs: { funds: 20 } }
+        ];
+        
+        return Math.min(...actions.map(action => action.costs.funds));
     }
 
     setupCampaignActions() {
@@ -258,7 +273,7 @@ class RepublicaDigital {
             { 
                 id: 'digital_campaign', 
                 title: '📱 Campanha Digital', 
-                description: 'Estratégia massiva em redes sociais e plataformas digitais.',
+                description: 'Estratégia em redes sociais.',
                 costs: { funds: 25 },
                 effects: { support: 15, mediaPresence: 20, approval: 10, polls: 12 },
                 type: 'populist'
@@ -266,7 +281,7 @@ class RepublicaDigital {
             { 
                 id: 'political_alliances', 
                 title: '🤝 Alianças Políticas', 
-                description: 'Articulação com partidos e lideranças regionais.',
+                description: 'Articulação com partidos.',
                 costs: { funds: 35 },
                 effects: { coalitions: 2, support: 18, approval: 8, polls: 10 },
                 type: 'conservative'
@@ -274,7 +289,7 @@ class RepublicaDigital {
             { 
                 id: 'grassroots_campaign', 
                 title: '🚶 Campanha de Base', 
-                description: 'Mobilização direta com eleitores em comunidades.',
+                description: 'Mobilização direta.',
                 costs: { funds: 20 },
                 effects: { support: 25, approval: 12, polls: 15, coalitions: 1 },
                 type: 'populist'
@@ -282,7 +297,7 @@ class RepublicaDigital {
             { 
                 id: 'media_strategy', 
                 title: '📺 Estratégia Midiática', 
-                description: 'Presença estratégica em TV, rádio e jornais.',
+                description: 'Presença em TV e rádio.',
                 costs: { funds: 40 },
                 effects: { approval: 20, mediaPresence: 25, polls: 18, support: 8 },
                 type: 'conservative'
@@ -290,7 +305,7 @@ class RepublicaDigital {
             { 
                 id: 'debate_preparation', 
                 title: '🎙️ Preparação para Debates', 
-                description: 'Treinamento intensivo com especialistas em comunicação.',
+                description: 'Treinamento intensivo.',
                 costs: { funds: 30 },
                 effects: { debateScore: 30, approval: 15, mediaPresence: 15, polls: 12 },
                 type: 'conservative'
@@ -298,7 +313,7 @@ class RepublicaDigital {
             { 
                 id: 'opposition_research', 
                 title: '⚔️ Pesquisa Opositiva', 
-                description: 'Investigação e exposição de fraquezas dos adversários.',
+                description: 'Investigação de adversários.',
                 costs: { funds: 25 },
                 effects: { support: 18, approval: -5, mediaPresence: 15, polls: 10 },
                 type: 'aggressive'
@@ -306,7 +321,7 @@ class RepublicaDigital {
             { 
                 id: 'popular_rallies', 
                 title: '🔥 Comícios Populares', 
-                description: 'Grandes eventos para energizar a base eleitoral.',
+                description: 'Grandes eventos.',
                 costs: { funds: 15 },
                 effects: { support: 20, approval: 10, polls: 8 },
                 type: 'populist'
@@ -314,7 +329,7 @@ class RepublicaDigital {
             { 
                 id: 'policy_platform', 
                 title: '📊 Plataforma Política', 
-                description: 'Apresentação detalhada de propostas de governo.',
+                description: 'Apresentação de propostas.',
                 costs: { funds: 20 },
                 effects: { approval: 18, polls: 15, support: 10, coalitions: 1 },
                 type: 'conservative'
@@ -327,11 +342,6 @@ class RepublicaDigital {
     executeCampaignAction(action) {
         if (!this.canAffordAction(action.costs)) {
             this.showNotification("Fundos insuficientes!");
-            return;
-        }
-
-        if (this.phaseCounters.campaignActions >= this.phaseLimits.campaign) {
-            this.showNotification("Limite de ações da campanha atingido!");
             return;
         }
 
@@ -351,15 +361,29 @@ class RepublicaDigital {
         this.updateUI();
         this.updateActionCounter();
         
-        // Verifica se atingiu limite
+        // FLUXO GARANTIDO: Sempre verifica se deve processar resultado
         if (this.phaseCounters.campaignActions >= this.phaseLimits.campaign) {
-            this.processCampaignResult();
+            // Atingiu limite de ações
+            setTimeout(() => this.processCampaignResult(), 1000);
         } else {
-            this.setupCampaignActions();
-            
-            // Evento ocasional
-            if (Math.random() < 0.3) {
-                this.triggerCampaignEvent();
+            // Verifica se ainda pode fazer ações
+            const minCost = this.getMinimumCostAction();
+            if (this.player.stats.funds < minCost) {
+                // Não pode mais fazer ações, força resultado
+                setTimeout(() => {
+                    this.showModal(
+                        "💰 SEM MAIS RECURSOS",
+                        "Recursos esgotados! Processando resultado da campanha...",
+                        [{ text: "Ver Resultado", callback: () => this.processCampaignResult() }]
+                    );
+                }, 1000);
+            } else {
+                // Pode continuar
+                this.setupCampaignActions();
+                
+                if (Math.random() < 0.3) {
+                    this.triggerCampaignEvent();
+                }
             }
         }
     }
@@ -368,18 +392,16 @@ class RepublicaDigital {
         let message = '';
         if (this.gameState === 'campaign') {
             const remaining = this.phaseLimits.campaign - this.phaseCounters.campaignActions;
-            message = `Ações restantes na campanha: ${remaining}`;
+            message = `Ações restantes: ${remaining}`;
         } else if (this.gameState === 'government') {
             const remaining = this.phaseLimits.government - this.phaseCounters.governmentActions;
-            message = `Ações restantes no mandato: ${remaining}`;
+            message = `Ações restantes: ${remaining}`;
         }
         
-        // Adiciona contador ao display
         const counterDisplay = document.getElementById('action-counter');
         if (counterDisplay) {
             counterDisplay.textContent = message;
         } else {
-            // Cria display se não existir
             const resourcesBar = document.querySelector('.resources-bar');
             if (resourcesBar && message) {
                 const counter = document.createElement('span');
@@ -393,7 +415,6 @@ class RepublicaDigital {
     }
 
     processCampaignResult() {
-        // Cálculo do resultado eleitoral
         const baseScore = (this.player.stats.support * 0.3) + 
                         (this.player.stats.approval * 0.25) + 
                         (this.player.stats.debateScore * 0.15) + 
@@ -405,19 +426,18 @@ class RepublicaDigital {
         
         this.gameHistory.performance.electionScore = finalScore;
         
-        // Resultado da eleição (necessário 60% para vencer)
         if (finalScore >= 60) {
             this.showModal(
                 "🎉 VITÓRIA ELEITORAL!", 
-                `Parabéns, Presidente ${this.player.name}! Você conquistou ${finalScore}% dos votos e foi eleito para o ${this.getOrdinal(this.player.term)} mandato.`, 
-                [{ text: "Assumir a Presidência", callback: () => this.startGovernment() }]
+                `Parabéns! Você conquistou ${finalScore}% dos votos e foi eleito para o ${this.getOrdinal(this.player.term)} mandato.`, 
+                [{ text: "Assumir Presidência", callback: () => this.startGovernment() }]
             );
         } else {
             if (this.player.term === 1) {
                 this.gameHistory.performance.gameEnded = 'electoral_defeat';
                 this.showModal(
                     "📊 DERROTA ELEITORAL", 
-                    `Você obteve ${finalScore}% dos votos, insuficiente para a vitória. A jornada política termina aqui.`, 
+                    `Você obteve ${finalScore}% dos votos. Não foi suficiente para a vitória.`, 
                     [
                         { text: "Nova Campanha", callback: () => this.init() },
                         { text: "Ver Relatório", callback: () => this.exportToPDF() }
@@ -427,7 +447,7 @@ class RepublicaDigital {
                 this.gameHistory.performance.gameEnded = 'reelection_failed';
                 this.showModal(
                     "📉 REELEIÇÃO FRACASSADA", 
-                    `Você obteve ${finalScore}% dos votos e não conseguiu se reeleger. Seu mandato anterior será seu legado.`, 
+                    `Você obteve ${finalScore}% e não conseguiu se reeleger.`, 
                     [
                         { text: "Ver Legado", callback: () => this.exportToPDF() },
                         { text: "Nova Era", callback: () => this.init() }
@@ -438,7 +458,6 @@ class RepublicaDigital {
     }
 
     getIdeologyBonus() {
-        // Bônus baseado na ideologia e contexto
         const economicCycle = this.aiSystem.economicCycle;
         const ideology = this.player.ideology;
         
@@ -447,7 +466,7 @@ class RepublicaDigital {
         } else if (economicCycle === 'growth') {
             return ideology === 'direita' ? 5 : ideology === 'centro' ? 3 : 0;
         }
-        return ideology === 'centro' ? 3 : 0; // Centro sempre tem pequeno bônus
+        return ideology === 'centro' ? 3 : 0;
     }
 
     getOrdinal(number) {
@@ -457,18 +476,64 @@ class RepublicaDigital {
         return `${number}º`;
     }
 
-    // === GOVERNO COM LIMITE DE AÇÕES ===
+    // === GOVERNO COM FLUXO GARANTIDO ===
     startGovernment() {
         this.gameState = 'government';
         this.phaseCounters.governmentActions = 0;
         
-        // Restaura fundos do governo
         this.player.stats.funds = this.player.stats.governmentFunds;
         
         this.showScreen('government');
         this.setupGovernmentActions();
         this.updateUI();
         this.updateActionCounter();
+        
+        // VERIFICAÇÃO CRÍTICA: Se não tem fundos, oferece ação alternativa
+        this.checkGovernmentViability();
+    }
+
+    checkGovernmentViability() {
+        const minCostAction = this.getMinimumGovernmentCost();
+        if (this.player.stats.funds < minCostAction) {
+            setTimeout(() => {
+                this.showModal(
+                    "💰 ORÇAMENTO LIMITADO",
+                    "Recursos governamentais limitados. Você pode focar em ações administrativas ou encerrar o mandato.",
+                    [
+                        { text: "Ações Administrativas", callback: () => this.processAdministrativeActions() },
+                        { text: "Encerrar Mandato", callback: () => this.processGovernmentResult() }
+                    ]
+                );
+            }, 500);
+        }
+    }
+
+    getMinimumGovernmentCost() {
+        const actions = [
+            { costs: { funds: 40 } },
+            { costs: { funds: 50 } },
+            { costs: { funds: 35 } },
+            { costs: { funds: 45 } },
+            { costs: { funds: 60 } },
+            { costs: { funds: 40 } },
+            { costs: { funds: 25 } },
+            { costs: { funds: 30 } }
+        ];
+        
+        return Math.min(...actions.map(action => action.costs.funds));
+    }
+
+    processAdministrativeActions() {
+        // Ações gratuitas de final de mandato
+        this.applyEffects({
+            economy: Math.random() * 10 - 5,
+            social: Math.random() * 10 - 5,
+            democracy: Math.random() * 5,
+            popularity: Math.random() * 10 - 5
+        });
+        
+        this.phaseCounters.governmentActions = this.phaseLimits.government; // Força fim
+        setTimeout(() => this.processGovernmentResult(), 1000);
     }
 
     setupGovernmentActions() {
@@ -476,20 +541,20 @@ class RepublicaDigital {
             { 
                 id: 'economic_reform', 
                 title: '💰 Reforma Econômica', 
-                description: 'Implementar mudanças estruturais na economia.',
+                description: 'Mudanças estruturais na economia.',
                 costs: { funds: 40 },
                 effects: { 
                     economy: 15, 
                     social: -5, 
                     popularity: -3,
-                    governmentFunds: 50 // Gera receita futura
+                    governmentFunds: 50
                 },
                 type: 'conservative'
             },
             { 
                 id: 'social_programs', 
                 title: '👥 Programas Sociais', 
-                description: 'Expandir assistência social e programas de inclusão.',
+                description: 'Expandir assistência social.',
                 costs: { funds: 50 },
                 effects: { 
                     social: 20, 
@@ -502,7 +567,7 @@ class RepublicaDigital {
             { 
                 id: 'security_operation', 
                 title: '🚔 Operação de Segurança', 
-                description: 'Reforçar segurança pública e combate ao crime.',
+                description: 'Reforçar segurança pública.',
                 costs: { funds: 35 },
                 effects: { 
                     security: 18, 
@@ -514,7 +579,7 @@ class RepublicaDigital {
             { 
                 id: 'environmental_policy', 
                 title: '🌱 Política Ambiental', 
-                description: 'Implementar medidas de proteção ambiental.',
+                description: 'Medidas de proteção ambiental.',
                 costs: { funds: 45 },
                 effects: { 
                     environment: 20, 
@@ -527,7 +592,7 @@ class RepublicaDigital {
             { 
                 id: 'infrastructure', 
                 title: '🏗️ Infraestrutura', 
-                description: 'Investir em obras e modernização.',
+                description: 'Investir em obras.',
                 costs: { funds: 60 },
                 effects: { 
                     economy: 15, 
@@ -540,7 +605,7 @@ class RepublicaDigital {
             { 
                 id: 'education_reform', 
                 title: '🎓 Reforma Educacional', 
-                description: 'Modernizar sistema educacional público.',
+                description: 'Modernizar educação.',
                 costs: { funds: 40 },
                 effects: { 
                     social: 18, 
@@ -565,7 +630,7 @@ class RepublicaDigital {
             { 
                 id: 'anti_corruption', 
                 title: '⚖️ Combate à Corrupção', 
-                description: 'Fortalecer instituições e transparência.',
+                description: 'Fortalecer transparência.',
                 costs: { funds: 30 },
                 effects: { 
                     democracy: 15, 
@@ -581,12 +646,7 @@ class RepublicaDigital {
 
     executeGovernmentAction(action) {
         if (!this.canAffordAction(action.costs)) {
-            this.showNotification("Fundos do governo insuficientes!");
-            return;
-        }
-
-        if (this.phaseCounters.governmentActions >= this.phaseLimits.government) {
-            this.showNotification("Limite de ações do mandato atingido!");
+            this.showNotification("Fundos insuficientes!");
             return;
         }
 
@@ -607,15 +667,25 @@ class RepublicaDigital {
         this.updateUI();
         this.updateActionCounter();
         
-        // Verifica se atingiu limite
+        // FLUXO GARANTIDO: Sempre verifica se deve processar resultado
         if (this.phaseCounters.governmentActions >= this.phaseLimits.government) {
-            this.processGovernmentResult();
+            setTimeout(() => this.processGovernmentResult(), 1000);
         } else {
-            this.setupGovernmentActions();
-            
-            // Evento ocasional
-            if (Math.random() < 0.25) {
-                this.triggerGovernmentEvent();
+            const minCost = this.getMinimumGovernmentCost();
+            if (this.player.stats.funds < minCost) {
+                setTimeout(() => {
+                    this.showModal(
+                        "💰 ORÇAMENTO ESGOTADO",
+                        "Sem recursos para mais ações. Finalizando mandato...",
+                        [{ text: "Finalizar Mandato", callback: () => this.processGovernmentResult() }]
+                    );
+                }, 1000);
+            } else {
+                this.setupGovernmentActions();
+                
+                if (Math.random() < 0.25) {
+                    this.triggerGovernmentEvent();
+                }
             }
         }
     }
@@ -623,7 +693,6 @@ class RepublicaDigital {
     calculateGovernmentMetrics() {
         const { economy, social, security, environment, democracy } = this.player.stats;
         
-        // Cálculo inteligente da popularidade
         const performanceWeight = (economy * 0.25) + (social * 0.25) + (security * 0.20) + (environment * 0.15) + (democracy * 0.15);
         const congressImpact = (this.realPolitics.congressApproval - 50) * 0.2;
         const mediaImpact = (50 - this.realPolitics.mediaHostility) * 0.15;
@@ -633,27 +702,25 @@ class RepublicaDigital {
         );
         this.player.stats.popularity = Math.max(0, Math.min(100, this.player.stats.popularity));
 
-        // Cálculo do risco de impeachment
         this.player.stats.impeachmentRisk = Math.max(0, Math.min(100, 
             100 - ((democracy * 0.4) + (this.player.stats.popularity * 0.4) + (this.realPolitics.congressApproval * 0.2))
         ));
 
-        // Verificações de fim de jogo por crise
+        // Verificações críticas com escape garantido
         if (this.player.stats.impeachmentRisk >= 90 && this.player.stats.popularity <= 15) {
-            this.triggerImpeachment();
+            setTimeout(() => this.triggerImpeachment(), 1500);
         } else if (this.player.stats.economy <= 15 && this.player.stats.social <= 15) {
-            this.triggerEconomicCrisis();
+            setTimeout(() => this.triggerEconomicCrisis(), 1500);
         }
     }
 
     processGovernmentResult() {
-        // Fim do mandato - determina se pode tentar reeleição
         this.player.term++;
         
         if (this.player.stats.popularity >= 55 && this.realPolitics.congressApproval >= 45) {
             this.showModal(
                 "🗳️ OPORTUNIDADE DE REELEIÇÃO", 
-                `Com ${Math.round(this.player.stats.popularity)}% de aprovação, você pode tentar a reeleição para o ${this.getOrdinal(this.player.term)} mandato.`, 
+                `Com ${Math.round(this.player.stats.popularity)}% de aprovação, você pode tentar a reeleição.`, 
                 [
                     { text: "Disputar Reeleição", callback: () => this.startReelectionCampaign() },
                     { text: "Encerrar Carreira", callback: () => this.showFinalResults() }
@@ -662,7 +729,7 @@ class RepublicaDigital {
         } else {
             this.showModal(
                 "📊 FIM DE MANDATO", 
-                `Seu mandato terminou com ${Math.round(this.player.stats.popularity)}% de aprovação. Condições insuficientes para reeleição.`, 
+                `Mandato concluído com ${Math.round(this.player.stats.popularity)}% de aprovação.`, 
                 [
                     { text: "Ver Legado", callback: () => this.showFinalResults() },
                     { text: "Nova Simulação", callback: () => this.init() }
@@ -672,34 +739,31 @@ class RepublicaDigital {
     }
 
     startReelectionCampaign() {
-        // Herda parte da performance anterior
         this.player.stats.funds = Math.max(60, Math.round(this.player.stats.popularity * 0.8));
         this.player.stats.support = Math.round(this.player.stats.popularity * 0.4);
         this.player.stats.approval = Math.round(this.player.stats.popularity * 0.7);
         this.player.stats.polls = Math.round(this.player.stats.popularity * 0.6);
         
-        // Mantém vantagens
         this.player.stats.mediaPresence = 35;
-        this.player.stats.debateScore = 15; // Experiência anterior
+        this.player.stats.debateScore = 15;
         
         this.startCampaign();
     }
 
-    // === EVENTOS INTELIGENTES ===
     triggerCampaignEvent() {
         const events = [
             {
                 title: "Debate Televisivo",
-                description: "Oportunidade de participar de debate em rede nacional.",
+                description: "Oportunidade de debate em rede nacional.",
                 choices: [
                     { text: "Participar ativamente", effects: { debateScore: 15, mediaPresence: 10 } },
                     { text: "Participar cautelosamente", effects: { debateScore: 8, approval: 5 } },
-                    { text: "Declinar educadamente", effects: { approval: -3, support: 3 } }
+                    { text: "Declinar", effects: { approval: -3, support: 3 } }
                 ]
             },
             {
                 title: "Apoio de Celebridade",
-                description: "Uma celebridade influente oferece apoio público.",
+                description: "Celebridade oferece apoio público.",
                 choices: [
                     { text: "Aceitar apoio", effects: { mediaPresence: 12, support: 8, funds: -5 } },
                     { text: "Agradecer sem compromisso", effects: { approval: 3 } },
@@ -716,7 +780,7 @@ class RepublicaDigital {
         const events = [
             {
                 title: "Crise Econômica Regional",
-                description: "Uma região específica enfrenta dificuldades econômicas.",
+                description: "Uma região enfrenta dificuldades econômicas.",
                 choices: [
                     { text: "Enviar auxílio federal", effects: { economy: -5, social: 10, popularity: 8, funds: -20 } },
                     { text: "Propor parcerias privadas", effects: { economy: 5, social: 3, funds: -10 } },
@@ -725,7 +789,7 @@ class RepublicaDigital {
             },
             {
                 title: "Tensão Internacional",
-                description: "Surgem atritos diplomáticos com país vizinho.",
+                description: "Atritos diplomáticos com país vizinho.",
                 choices: [
                     { text: "Buscar mediação", effects: { international: 8, democracy: 5, funds: -15 } },
                     { text: "Manter posição firme", effects: { security: 8, international: -3, popularity: 5 } },
@@ -742,7 +806,7 @@ class RepublicaDigital {
         this.gameHistory.performance.gameEnded = 'impeachment';
         this.showModal(
             "⚖️ IMPEACHMENT", 
-            "O processo de impeachment foi aprovado. Seu mandato chegou ao fim prematuramente.", 
+            "O processo de impeachment foi aprovado. Seu mandato chegou ao fim.", 
             [
                 { text: "Ver Análise", callback: () => this.exportToPDF() },
                 { text: "Nova Tentativa", callback: () => this.init() }
@@ -779,13 +843,13 @@ class RepublicaDigital {
         this.showModal(
             "🏛️ LEGADO PRESIDENCIAL", 
             `<strong>${evaluation}</strong><br><br>
-             Mandatos Exercidos: ${this.player.term - 1}<br>
-             Performance Média: ${Math.round(avgPerf)}%<br>
-             Aprovação Final: ${Math.round(this.player.stats.popularity)}%<br>
-             Tempo de Jogo: ${this.formatPlayTime()}`, 
+             Mandatos: ${this.player.term - 1}<br>
+             Performance: ${Math.round(avgPerf)}%<br>
+             Aprovação: ${Math.round(this.player.stats.popularity)}%<br>
+             Tempo: ${this.formatPlayTime()}`, 
             [
-                { text: "Exportar Relatório Completo", callback: () => this.exportToPDF() },
-                { text: "Nova Era Política", callback: () => this.init() }
+                { text: "Relatório Completo", callback: () => this.exportToPDF() },
+                { text: "Nova Era", callback: () => this.init() }
             ]
         );
     }
@@ -793,16 +857,15 @@ class RepublicaDigital {
     formatPlayTime() {
         const hours = Math.floor(this.player.playTime / 3600);
         const minutes = Math.floor((this.player.playTime % 3600) / 60);
-        const seconds = this.player.playTime % 60;
         
         if (hours > 0) {
-            return `${hours}h ${minutes}m ${seconds}s`;
+            return `${hours}h ${minutes}m`;
         } else {
-            return `${minutes}m ${seconds}s`;
+            return `${minutes}m`;
         }
     }
 
-    // === SISTEMA DE EXPORTAÇÃO ===
+    // === EXPORTAÇÃO ===
     exportToPDF() {
         const reportContent = this.generateDetailedReport();
         this.downloadTextReport(reportContent);
@@ -817,13 +880,13 @@ class RepublicaDigital {
         report.push("DADOS DO POLÍTICO:");
         report.push(`• Nome: ${this.player.name}`);
         report.push(`• Ideologia: ${this.player.ideology.toUpperCase()}`);
-        report.push(`• Mandatos Exercidos: ${this.player.term - 1}`);
-        report.push(`• Tempo de Jogo: ${this.formatPlayTime()}`);
+        report.push(`• Mandatos: ${this.player.term - 1}`);
+        report.push(`• Tempo: ${this.formatPlayTime()}`);
         report.push("");
         
         if (this.gameHistory.performance.electionScore) {
-            report.push("DESEMPENHO ELEITORAL:");
-            report.push(`• Último Resultado: ${this.gameHistory.performance.electionScore}%`);
+            report.push("ÚLTIMO RESULTADO ELEITORAL:");
+            report.push(`• Percentual: ${this.gameHistory.performance.electionScore}%`);
             report.push("");
         }
         
@@ -837,25 +900,12 @@ class RepublicaDigital {
         report.push(`• Popularidade: ${Math.round(this.player.stats.popularity)}%`);
         report.push("");
         
-        report.push("CONTEXTO POLÍTICO:");
-        report.push(`• Aprovação no Congresso: ${Math.round(this.realPolitics.congressApproval)}%`);
-        report.push(`• Hostilidade da Mídia: ${Math.round(this.realPolitics.mediaHostility)}%`);
-        report.push(`• Pressão Econômica: ${Math.round(this.realPolitics.economicPressure)}%`);
-        report.push("");
-        
         if (this.gameHistory.performance.finalEvaluation) {
-            report.push(`AVALIAÇÃO FINAL: ${this.gameHistory.performance.finalEvaluation}`);
+            report.push(`AVALIAÇÃO: ${this.gameHistory.performance.finalEvaluation}`);
             report.push("");
         }
         
-        report.push("PRINCIPAIS DECISÕES:");
-        this.gameHistory.actions.slice(-10).forEach((action, index) => {
-            const date = new Date(action.timestamp).toLocaleDateString('pt-BR');
-            report.push(`${index + 1}. ${action.description} (${date})`);
-        });
-        
-        report.push("");
-        report.push(`Relatório gerado em: ${new Date().toLocaleString('pt-BR')}`);
+        report.push(`Relatório gerado: ${new Date().toLocaleString('pt-BR')}`);
         report.push("═══════════════════════════════════════");
         
         return report.join('\n');
@@ -881,7 +931,7 @@ class RepublicaDigital {
             if (this.gameState !== 'setup') {
                 this.autoSave();
             }
-        }, 45000);
+        }, 60000);
     }
 
     autoSave() {
@@ -911,7 +961,7 @@ class RepublicaDigital {
         try {
             const savedData = localStorage.getItem('republicaDigital_save');
             if (!savedData) {
-                this.showNotification("📁 Nenhum jogo salvo encontrado!");
+                this.showNotification("📁 Nenhum jogo salvo!");
                 return;
             }
 
@@ -935,7 +985,7 @@ class RepublicaDigital {
             this.updateActionCounter();
             this.showNotification("📁 Jogo carregado!");
         } catch(e) {
-            this.showNotification("❌ Erro ao carregar jogo!");
+            this.showNotification("❌ Erro ao carregar!");
         }
     }
 
@@ -1044,7 +1094,6 @@ class RepublicaDigital {
             border-radius: 8px;
             z-index: 1001;
             box-shadow: 0 4px 15px rgba(0,0,0,0.3);
-            animation: slideInRight 0.3s ease;
         `;
         
         document.body.appendChild(notification);
@@ -1063,16 +1112,13 @@ class RepublicaDigital {
             if (el) el.textContent = val;
         };
 
-        // Atualiza tempo de jogo
         this.updatePlayTimeDisplay();
 
-        // Header
         const termDisplay = document.getElementById('term-display');
         if (termDisplay) {
             termDisplay.textContent = this.gameState === 'government' ? `${this.player.term - 1}º Mandato` : '';
         }
 
-        // Campaign stats
         safeSet('funds', Math.max(0, stats.funds));
         safeSet('support', Math.max(0, Math.round(stats.support)));
 
@@ -1098,7 +1144,6 @@ class RepublicaDigital {
             `;
         }
 
-        // Government stats
         const governmentStatsEl = document.getElementById('government-stats');
         if (governmentStatsEl && this.gameState === 'government') {
             governmentStatsEl.innerHTML = `
@@ -1129,7 +1174,6 @@ class RepublicaDigital {
             `;
         }
         
-        // Progress bars
         safeSet('popularity-percent', `${Math.round(stats.popularity)}%`);
         const popularityBar = document.getElementById('popularity-bar');
         if (popularityBar) {
